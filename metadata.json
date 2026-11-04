@@ -1,0 +1,6 @@
+{
+  "name": "Mute Jar",
+  "description": "A lightweight, privacy-first meeting companion that automatically detects when you speak while muted, deposits cartoon MuteCoins into a glass jar, and turns slip-ups into charitable giving, personal goals, and team pledges.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

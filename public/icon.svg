@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="jarGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="coinGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base circle for maskable compliance -->
+  <rect width="512" height="512" rx="128" fill="#0f172a"/>
+
+  <!-- Glass Jar Body -->
+  <g filter="url(#shadow)">
+    <!-- Cork Lid -->
+    <path d="M192 80 H320 V110 H192 Z" fill="#b45309" stroke="#78350f" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M168 110 H344 V136 H168 Z" fill="#92400e" stroke="#78350f" stroke-width="8" stroke-linejoin="round"/>
+    
+    <!-- Jar Outline -->
+    <path d="M144 140 H368 L392 400 C392 432 368 456 336 456 H176 C144 456 120 432 120 400 Z" 
+          fill="url(#jarGlass)" fill-opacity="0.3" stroke="#7dd3fc" stroke-width="12" stroke-linejoin="round"/>
+
+    <!-- Specular highlight -->
+    <path d="M152 170 C152 170 144 260 144 380" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-opacity="0.6"/>
+  </g>
+
+  <!-- Golden MuteCoin Centerpiece -->
+  <circle cx="256" cy="300" r="92" fill="url(#coinGold)" stroke="#fde047" stroke-width="8" filter="url(#shadow)"/>
+  <circle cx="256" cy="300" r="76" fill="none" stroke="#b45309" stroke-width="4" stroke-dasharray="8 6"/>
+
+  <!-- Microphone Mute Icon -->
+  <g transform="translate(256, 300) scale(2.8) translate(-12, -12)">
+    <line x1="2" y1="2" x2="22" y2="22" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M5 10v2a7 7 0 0 0 12 5" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="12" y1="19" x2="12" y2="23" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="8" y1="23" x2="16" y2="23" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M9 9v3a3 3 0 0 0 5.12 2.12" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>
