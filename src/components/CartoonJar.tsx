@@ -73,19 +73,20 @@ export const CartoonJar: React.FC = () => {
   const runningTotalFormatted = formatCurrency(currentMonthCoins * settings.perCoinValue);
 
   return (
-    <div className="flex flex-col items-center select-none w-full max-w-sm">
+    <div className="flex flex-col items-center select-none w-full max-w-md">
       {/* Top Header Controls: Fill gauge & Test Coin */}
-      <div className="flex items-center justify-between w-full mb-3 px-2 text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex items-center justify-between w-full mb-3 px-2 text-xs text-slate-600 dark:text-slate-300">
         <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          <span className="font-semibold text-slate-700 dark:text-slate-300">Mute Jar</span>
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
+          <span className="font-semibold text-slate-800 dark:text-slate-200">Mute Jar</span>
         </div>
         <button
           onClick={testCoinDrop}
-          className="flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-all font-semibold cursor-pointer active:scale-95 px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-amber-300/60 dark:border-amber-700/60"
+          aria-label="Click to drop a cartoon test coin"
+          className="flex items-center gap-1 text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-200 transition-all font-semibold cursor-pointer active:scale-95 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-amber-300/80 dark:border-amber-700/80 focus-visible:ring-2 focus-visible:ring-amber-500"
           title="Click to drop a cartoon test coin"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Test Drop</span>
         </button>
       </div>
@@ -261,7 +262,7 @@ export const CartoonJar: React.FC = () => {
         </div>
 
         {/* Editable MuteCoin Exchange Rate Pill */}
-        <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
           <span className="font-medium">Exchange Rate:</span>
 
           {!isEditingRate ? (
@@ -271,32 +272,38 @@ export const CartoonJar: React.FC = () => {
               </span>
               <button
                 onClick={() => setIsEditingRate(true)}
-                className="p-1 text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
+                className="p-1 text-amber-700 hover:text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
                 title="Edit coin exchange rate"
+                aria-label="Edit coin exchange rate"
               >
-                <Edit2 className="w-3 h-3" />
+                <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-1">
+              <label htmlFor="temp-coin-rate-input" className="sr-only">
+                Coin exchange rate in {settings.currency}
+              </label>
               <span className="font-bold text-slate-700 dark:text-slate-300">
                 {settings.currency}
               </span>
               <input
+                id="temp-coin-rate-input"
                 type="number"
                 min="0.1"
                 step="0.5"
                 value={tempRate}
                 onChange={(e) => setTempRate(e.target.value)}
-                className="w-16 p-1 text-xs rounded border border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-hidden"
+                className="w-16 p-1 text-xs rounded border border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-amber-500"
                 autoFocus
               />
               <button
                 onClick={handleSaveRate}
-                className="p-1 bg-amber-500 text-slate-950 rounded-md hover:bg-amber-600 font-bold transition-colors cursor-pointer"
+                className="p-1.5 bg-amber-500 text-slate-950 rounded-md hover:bg-amber-600 font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
                 title="Save Rate"
+                aria-label="Save coin exchange rate"
               >
-                <Check className="w-3 h-3" />
+                <Check className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           )}

@@ -23,6 +23,8 @@ import {
   AlertCircle,
   Eye,
   Trash2,
+  Camera,
+  Image as ImageIcon,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -86,6 +88,11 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
       'Bring morning donuts and coffee to team standup to thank colleagues for tolerating mute slip-ups.'
   );
 
+  // Photo proof capture / upload for completed goals & dares
+  const [proofPhotoDataUrl, setProofPhotoDataUrl] = useState<string | null>(null);
+  const photoUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const photoCameraInputRef = useRef<HTMLInputElement | null>(null);
+
   // Gemini AI suggestions
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<SuggestionItem[]>([]);
@@ -95,6 +102,45 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
   const personaInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
   const totalValuation = formatCurrency(currentCycleCoins * settings.perCoinValue);
+
+  // Compress photo for local storage
+  const handleCompressAndSetPhoto = (file: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 900;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          setProofPhotoDataUrl(compressed);
+        } else {
+          setProofPhotoDataUrl(rawUrl);
+        }
+      };
+      img.src = rawUrl;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Handle file receipt reading
   const processUploadedFile = (file: File) => {
@@ -240,6 +286,8 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
         receiptDataUrl: receiptDataUrl || undefined,
         receiptFileName: receiptFileName || undefined,
         receiptUploadedAt: receiptDataUrl ? Date.now() : undefined,
+        photoDataUrl: proofPhotoDataUrl || undefined,
+        photoCapturedAt: proofPhotoDataUrl ? Date.now() : undefined,
       });
     } else if (settings.persona === 'pragmatist') {
       title = goalTitle;
@@ -257,6 +305,8 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
         description,
         coinsCommitted: currentCycleCoins,
         estimatedValue: totalValuation,
+        photoDataUrl: proofPhotoDataUrl || undefined,
+        photoCapturedAt: proofPhotoDataUrl ? Date.now() : undefined,
       });
     } else {
       title = workTitle;
@@ -274,6 +324,8 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
         description,
         coinsCommitted: currentCycleCoins,
         estimatedValue: totalValuation,
+        photoDataUrl: proofPhotoDataUrl || undefined,
+        photoCapturedAt: proofPhotoDataUrl ? Date.now() : undefined,
       });
     }
 
@@ -292,7 +344,12 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -305,7 +362,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              <h2 id="review-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Mute Jar Review · {currentCycle.label}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -316,7 +373,8 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close review dialog"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
           >
             <X className="w-4 h-4" />
           </button>
@@ -661,58 +719,196 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
           {/* PATH 2: PRAGMATIST (Personal Habit Milestone Goal) */}
           {settings.persona === 'pragmatist' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="pragmatist-goal-title" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Productivity / Habit Goal Title
                 </label>
                 <input
+                  id="pragmatist-goal-title"
                   type="text"
                   value={goalTitle}
                   onChange={(e) => setGoalTitle(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="pragmatist-goal-desc" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Goal Action Description ({currentCycleCoins} Mute Coins Commitment)
                 </label>
                 <textarea
+                  id="pragmatist-goal-desc"
                   rows={2}
                   value={goalDesc}
                   onChange={(e) => setGoalDesc(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 />
+              </div>
+
+              {/* Optional Photo Proof Capture / Upload */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Attach Photo Proof (Optional)</span>
+                  </span>
+                  {proofPhotoDataUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setProofPhotoDataUrl(null)}
+                      className="text-[11px] text-rose-500 hover:text-rose-600 font-semibold cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {proofPhotoDataUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={proofPhotoDataUrl}
+                      alt="Proof preview"
+                      className="w-16 h-16 rounded-xl object-cover border border-amber-400/50 shadow-xs"
+                    />
+                    <div className="text-[11px] text-slate-500">
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 block">Photo attached!</span>
+                      Will be saved with this goal and shown on your shareable card.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={photoUploadInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && handleCompressAndSetPhoto(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <input
+                      ref={photoCameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => e.target.files?.[0] && handleCompressAndSetPhoto(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoCameraInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:border-amber-400 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Take Photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => photoUploadInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:border-amber-400 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-sky-500" />
+                      <span>Upload Photo</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* PATH 3: ROAST MASTER (Team Forfeit & Social Treat) */}
           {settings.persona === 'roastmaster' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="roast-work-title" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Workplace Team Activity / Social Shout Title
                 </label>
                 <input
+                  id="roast-work-title"
                   type="text"
                   value={workTitle}
                   onChange={(e) => setWorkTitle(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="roast-work-desc" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Team Forfeit Action Description ({currentCycleCoins} Mute Coins)
                 </label>
                 <textarea
+                  id="roast-work-desc"
                   rows={2}
                   value={workDesc}
                   onChange={(e) => setWorkDesc(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                 />
+              </div>
+
+              {/* Optional Photo Proof Capture / Upload */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Attach Photo Proof (Pastries, coffee, or dare selfie)</span>
+                  </span>
+                  {proofPhotoDataUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setProofPhotoDataUrl(null)}
+                      className="text-[11px] text-rose-500 hover:text-rose-600 font-semibold cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {proofPhotoDataUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={proofPhotoDataUrl}
+                      alt="Treat proof preview"
+                      className="w-16 h-16 rounded-xl object-cover border border-rose-400/50 shadow-xs"
+                    />
+                    <div className="text-[11px] text-slate-500">
+                      <span className="font-semibold text-rose-600 dark:text-rose-400 block">Photo attached!</span>
+                      Will be saved with this dare and ready to share with your team.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={photoUploadInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && handleCompressAndSetPhoto(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <input
+                      ref={photoCameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => e.target.files?.[0] && handleCompressAndSetPhoto(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoCameraInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:border-rose-400 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Take Photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => photoUploadInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:border-rose-400 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-sky-500" />
+                      <span>Upload Photo</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

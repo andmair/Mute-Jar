@@ -125,12 +125,13 @@ const MainAppContent: React.FC = () => {
               onClick={() => setIsProfileOpen(true)}
               className="flex items-center gap-2 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-500 bg-slate-100/80 dark:bg-slate-800/60 transition-all cursor-pointer group"
               title="Customize Name & Avatar"
+              aria-label="Customize user profile name and avatar"
             >
               <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 shadow-xs flex items-center justify-center text-sm border border-slate-200/80 dark:border-slate-600">
                 {getAvatarEmoji(settings.userAvatar)}
               </div>
               <span className="hidden sm:inline text-xs font-bold text-slate-800 dark:text-slate-200 max-w-[110px] truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">
-                {settings.userName || 'Andrew Mair'}
+                {settings.userName || 'My Profile'}
               </span>
             </button>
 
@@ -139,6 +140,7 @@ const MainAppContent: React.FC = () => {
               onClick={toggleTheme}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Toggle Light/Dark Theme"
+              aria-label="Toggle Light and Dark Theme"
             >
               {settings.theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -152,6 +154,7 @@ const MainAppContent: React.FC = () => {
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Settings & Persona"
+              aria-label="Open Settings and Persona"
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -177,13 +180,14 @@ const MainAppContent: React.FC = () => {
               onClick={() => setIsProfileOpen(true)}
               className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/25 to-amber-500/10 border-2 border-amber-400/80 shadow-xs flex items-center justify-center text-2xl cursor-pointer hover:scale-105 transition-transform shrink-0"
               title="Customize Name & Avatar"
+              aria-label="Customize profile name and avatar"
             >
               {getAvatarEmoji(settings.userAvatar)}
             </button>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                  {settings.userName || 'Andrew Mair'}’s Mute Jar
+                  {settings.userName ? `${settings.userName}’s Mute Jar` : 'My Mute Jar'}
                 </h1>
                 <button
                   onClick={() => setIsProfileOpen(true)}
@@ -192,15 +196,13 @@ const MainAppContent: React.FC = () => {
                   Edit Profile
                 </button>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                <span className="font-mono text-[11px]">{settings.userEmail || 'andmair@gmail.com'}</span>
-                <span>•</span>
+              <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                 <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Auto-Start Active</span>
                 </span>
                 <span>•</span>
-                <span className="font-semibold text-amber-600 dark:text-amber-400 text-[11px]">
+                <span className="font-semibold text-amber-700 dark:text-amber-300 text-[11px]">
                   {philosophyInfo.title}
                 </span>
               </div>
@@ -209,33 +211,33 @@ const MainAppContent: React.FC = () => {
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <div className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-2">
-              <span className="text-slate-500 dark:text-slate-400">Exchange Rate:</span>
-              <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Exchange Rate:</span>
+              <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
                 1 Coin = {settings.currency}{settings.perCoinValue.toFixed(2)}
               </span>
             </div>
           </div>
         </div>
         {/* Live Audio Monitor Box: Positioned above the Mute Jar & below the profile box */}
-        <section id="monitor-view">
+        <section id="monitor-view" aria-label="Audio Monitor Section">
           <AudioMonitor onOpenCalendarModal={() => setIsCalendarOpen(true)} />
         </section>
 
         {/* Hero Section: The Mute Jar Box (Merged with Mute Check) */}
-        <section id="jar-view" className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden p-6 sm:p-8">
+        <section id="jar-view" aria-label="Mute Jar and Mute Check Section" className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden p-6 sm:p-8">
           {/* Playful ambient background glows */}
           <div className="absolute -top-12 -left-12 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Side by side layout: Jar on Left, Mute Check on Right */}
-          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-stretch justify-between gap-6 lg:gap-10">
-            {/* Left Side: 3D Mute Jar shifted to the left with buffer on both sides */}
-            <div className="w-full md:w-auto flex flex-col items-center justify-center px-4 sm:px-8 py-2 shrink-0">
+          {/* Side by side layout: Jar 2/3 width on left, Mute Check 1/3 width on right (stacked with jar on top on mobile) */}
+          <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-stretch justify-between gap-6 lg:gap-8">
+            {/* Left Side: 3D Mute Jar taking 2/3 width on desktop, stacked on top on mobile */}
+            <div className="w-full lg:w-2/3 flex flex-col items-center justify-center px-2 sm:px-4 py-2">
               <CartoonJar />
             </div>
 
-            {/* Right Side: Merged Mute Check Box (No 'Month' in title) */}
-            <div className="flex-1 w-full min-w-0 flex flex-col justify-between self-stretch py-2">
+            {/* Right Side: Merged Mute Check Box taking 1/3 width on desktop, stacked below on mobile */}
+            <div className="w-full lg:w-1/3 min-w-0 flex flex-col justify-between self-stretch py-2">
               <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-amber-500/5 dark:from-amber-950/40 dark:via-slate-800/80 dark:to-slate-900/60 border border-amber-300/80 dark:border-amber-500/30 shadow-xs flex flex-col justify-between gap-5 h-full">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

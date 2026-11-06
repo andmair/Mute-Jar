@@ -74,6 +74,8 @@ interface MuteJarContextType {
     receiptDataUrl?: string;
     receiptFileName?: string;
     receiptUploadedAt?: number;
+    photoDataUrl?: string;
+    photoCapturedAt?: number;
   }) => void;
   updatePledgeAction: (id: string, updates: Partial<PledgeActionRecord>) => void;
   clearSampleMutes: () => boolean;
@@ -92,8 +94,8 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_SETTINGS: UserSettings = {
-  userName: 'Andrew Mair',
-  userEmail: 'andmair@gmail.com',
+  userName: '',
+  userEmail: '',
   userAvatar: 'astronaut',
   privacyConsent: {
     hasConsented: false,
@@ -221,8 +223,8 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return {
           ...DEFAULT_SETTINGS,
           ...parsed,
-          userName: parsed.userName || DEFAULT_SETTINGS.userName,
-          userEmail: parsed.userEmail || DEFAULT_SETTINGS.userEmail,
+          userName: parsed.userName || '',
+          userEmail: parsed.userEmail || '',
           userAvatar: parsed.userAvatar || DEFAULT_SETTINGS.userAvatar,
           autoStartMonitoring: parsed.autoStartMonitoring !== undefined ? parsed.autoStartMonitoring : true,
           autoStartOnOSBoot: parsed.autoStartOnOSBoot !== undefined ? parsed.autoStartOnOSBoot : true,
@@ -680,6 +682,8 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     receiptDataUrl?: string;
     receiptFileName?: string;
     receiptUploadedAt?: number;
+    photoDataUrl?: string;
+    photoCapturedAt?: number;
   }) => {
     const currentKey = getCurrentMonthKey();
     const safeUrl = sanitizeUrl(pledgeData.donationUrl);
@@ -692,14 +696,16 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       description: sanitizeText(pledgeData.description, 400),
       coinsCommitted: pledgeData.coinsCommitted,
       estimatedValue: pledgeData.estimatedValue,
-      status: pledgeData.receiptDataUrl ? 'completed' : 'pending',
+      status: (pledgeData.receiptDataUrl || pledgeData.photoDataUrl) ? 'completed' : 'pending',
       createdAt: Date.now(),
       donationUrl: safeUrl || undefined,
       receiptDataUrl: pledgeData.receiptDataUrl,
       receiptFileName: pledgeData.receiptFileName ? sanitizeText(pledgeData.receiptFileName, 120) : undefined,
       receiptUploadedAt: pledgeData.receiptUploadedAt || (pledgeData.receiptDataUrl ? Date.now() : undefined),
-      actionedAt: pledgeData.receiptDataUrl ? Date.now() : undefined,
-      actionNotes: pledgeData.receiptDataUrl ? 'Donation receipt uploaded and verified.' : undefined,
+      photoDataUrl: pledgeData.photoDataUrl,
+      photoCapturedAt: pledgeData.photoCapturedAt || (pledgeData.photoDataUrl ? Date.now() : undefined),
+      actionedAt: (pledgeData.receiptDataUrl || pledgeData.photoDataUrl) ? Date.now() : undefined,
+      actionNotes: pledgeData.receiptDataUrl ? 'Donation receipt uploaded and verified.' : pledgeData.photoDataUrl ? 'Goal completed with photo proof.' : undefined,
     };
 
     setPledgeActions((prev) => [newPledge, ...prev]);

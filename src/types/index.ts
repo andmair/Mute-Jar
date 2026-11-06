@@ -44,6 +44,8 @@ export interface PledgeActionRecord {
   receiptDataUrl?: string; // Uploaded receipt image or document
   receiptFileName?: string;
   receiptUploadedAt?: number;
+  photoDataUrl?: string; // Captured or uploaded completion photo
+  photoCapturedAt?: number;
 }
 
 export interface CharityAggregator {
@@ -66,7 +68,7 @@ export interface UserVoiceProfile {
 
 export interface UserSettings {
   userName: string;
-  userEmail: string;
+  userEmail?: string;
   userAvatar: string;
   privacyConsent: PrivacyConsent;
   persona: PersonaType;
