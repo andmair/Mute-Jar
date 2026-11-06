@@ -6,6 +6,7 @@ import {
   PledgeActionRecord,
   ScheduledMeeting,
   UserSettings,
+  UserVoiceProfile,
 } from '../types';
 import { audioEngine } from '../utils/audioEngine';
 import { detectLocalCurrency, formatLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
@@ -35,6 +36,11 @@ interface MuteJarContextType {
     hasMeetingAudio: boolean;
     isCalibrating: boolean;
     calibrationProgress: number;
+    voiceMatchScore: number;
+    isSpeakerMatch: boolean;
+    isVoiceCalibrating: boolean;
+    voiceCalibrationProgress: number;
+    detectedPitchHz: number | null;
   };
   scheduledMeetings: ScheduledMeeting[];
   setScheduledMeetings: React.Dispatch<React.SetStateAction<ScheduledMeeting[]>>;
@@ -52,6 +58,8 @@ interface MuteJarContextType {
   startListening: () => Promise<boolean>;
   stopListening: () => void;
   calibrateRoomNoise: () => Promise<{ averageFloor: number; peakFloor: number }>;
+  calibrateVoiceProfile: (durationMs?: number) => Promise<UserVoiceProfile>;
+  clearVoiceProfile: () => void;
   toggleMeetingAudio: () => Promise<boolean>;
   requestPersonaChange: (targetPersona: PersonaType) => 'switched_immediately' | 'confirmation_required';
   confirmPersonaChange: (targetPersona: PersonaType, mode: 'immediate' | 'wait_for_cycle_end') => void;
@@ -112,6 +120,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   hasCompletedOnboarding: false,
   isSetupMode: true,
   activeMeetingTitle: '',
+  // Speaker Voiceprint Profile defaults
+  voiceProfileEnabled: true,
+  voiceMatchThreshold: 65,
   // Philosophy targets & goals defaults
   selectedCharityId: 'globalgiving',
   customCharityUrl: 'https://www.globalgiving.org',
@@ -284,9 +295,14 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     hasMeetingAudio: false,
     isCalibrating: false,
     calibrationProgress: 0,
+    voiceMatchScore: 85,
+    isSpeakerMatch: true,
+    isVoiceCalibrating: false,
+    voiceCalibrationProgress: 0,
+    detectedPitchHz: null as number | null,
   });
 
-  // Keep AudioEngine synced with settings including radio background filter
+  // Keep AudioEngine synced with settings including background filter and voice profile
   useEffect(() => {
     audioEngine.setSoundSettings(settings.soundEnabled, settings.soundVolume);
     audioEngine.setSensitivity(settings.sensitivity);
@@ -296,6 +312,11 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       settings.microphoneMode || 'near_field',
       settings.calibratedNoiseFloor || 0
     );
+    audioEngine.setVoiceProfileSettings(
+      settings.voiceProfileEnabled !== false,
+      settings.userVoiceProfile || null,
+      settings.voiceMatchThreshold || 65
+    );
   }, [
     settings.soundEnabled,
     settings.soundVolume,
@@ -304,6 +325,9 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     settings.noiseFloorMargin,
     settings.microphoneMode,
     settings.calibratedNoiseFloor,
+    settings.voiceProfileEnabled,
+    settings.userVoiceProfile,
+    settings.voiceMatchThreshold,
   ]);
 
   // Persist state changes
@@ -432,13 +456,25 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Speech detected while monitor active!
         addMuteCoin();
       },
-      (micLevel, threshold, peerLevel, noiseFloor) => {
+      (
+        micLevel,
+        threshold,
+        peerLevel,
+        noiseFloor,
+        isSpeech,
+        voiceMatchScore = 85,
+        isSpeakerMatch = true,
+        detectedPitchHz = null
+      ) => {
         setAudioState((prev) => ({
           ...prev,
           micLevel,
           threshold,
           noiseFloor,
           peerLevel,
+          voiceMatchScore,
+          isSpeakerMatch,
+          detectedPitchHz,
           hasMeetingAudio: audioEngine.hasMeetingAudioConnected(),
         }));
       }
@@ -465,6 +501,11 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       hasMeetingAudio: false,
       isCalibrating: false,
       calibrationProgress: 0,
+      voiceMatchScore: 85,
+      isSpeakerMatch: true,
+      isVoiceCalibrating: false,
+      voiceCalibrationProgress: 0,
+      detectedPitchHz: null,
     });
   };
 
@@ -485,6 +526,43 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       noiseFloor: result.averageFloor,
     }));
     return result;
+  };
+
+  const calibrateVoiceProfile = async (durationMs: number = 3500): Promise<UserVoiceProfile> => {
+    setAudioState((prev) => ({ ...prev, isVoiceCalibrating: true, voiceCalibrationProgress: 0 }));
+    if (!audioState.isListening) {
+      await audioEngine.startMicrophone();
+      setAudioState((prev) => ({ ...prev, isListening: true }));
+    }
+    const profile = await audioEngine.calibrateVoiceProfile(durationMs, (percent) => {
+      setAudioState((prev) => ({ ...prev, voiceCalibrationProgress: percent }));
+    });
+    updateSettings({
+      userVoiceProfile: profile,
+      voiceProfileEnabled: true,
+      voiceMatchThreshold: settings.voiceMatchThreshold || 65,
+    });
+    setAudioState((prev) => ({
+      ...prev,
+      isVoiceCalibrating: false,
+      voiceCalibrationProgress: 100,
+      voiceMatchScore: 92,
+      isSpeakerMatch: true,
+    }));
+    return profile;
+  };
+
+  const clearVoiceProfile = () => {
+    updateSettings({
+      userVoiceProfile: undefined,
+      voiceProfileEnabled: false,
+    });
+    audioEngine.setVoiceProfileSettings(false, null, 65);
+    setAudioState((prev) => ({
+      ...prev,
+      voiceMatchScore: 100,
+      isSpeakerMatch: true,
+    }));
   };
 
   const toggleMeetingAudio = async (): Promise<boolean> => {
@@ -751,6 +829,8 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         startListening,
         stopListening,
         calibrateRoomNoise,
+        calibrateVoiceProfile,
+        clearVoiceProfile,
         toggleMeetingAudio,
         requestPersonaChange,
         confirmPersonaChange,

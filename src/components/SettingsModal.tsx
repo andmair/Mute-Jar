@@ -21,8 +21,11 @@ import {
   Clock,
   Calendar,
   CheckCircle2,
+  RefreshCw,
+  HardDrive,
 } from 'lucide-react';
 import { POPULAR_CURRENCIES, detectLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
+import { getCurrentBuildId, purgeAllLocalCacheNow } from '../utils/buildCacheManager';
 
 export const SettingsModal: React.FC<{
   isOpen: boolean;
@@ -549,6 +552,39 @@ export const SettingsModal: React.FC<{
               <p className="text-slate-600 dark:text-slate-400 text-[11px]">
                 Audio is analyzed strictly in volatile memory on this device. No speech is transcribed, saved, or sent anywhere.
               </p>
+            </div>
+          </div>
+
+          {/* Build Version & Cache Management */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+                <HardDrive className="w-4 h-4 text-amber-500" />
+                <span>Build Version &amp; Local Cache Lifecycle</span>
+              </div>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
+                {getCurrentBuildId()}
+              </span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+              <strong className="text-slate-900 dark:text-white">Automated cache clearance active:</strong> Every time a new build is deployed or launched, all locally cached data (<code className="font-mono text-[10px] bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code>, session cache, and service worker caches) is automatically purged to guarantee a clean slate without stale states.
+            </p>
+            <div className="pt-1 flex items-center justify-between gap-3">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                Need to start completely fresh right now?
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Clear all locally cached data and reload the app?')) {
+                    purgeAllLocalCacheNow();
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Clear Cache Now</span>
+              </button>
             </div>
           </div>
 

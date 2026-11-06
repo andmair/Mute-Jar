@@ -8,7 +8,8 @@ interface BeforeInstallPromptEvent extends Event {
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [os, setOS] = useState<'windows' | 'mac' | 'chromeos' | 'linux' | 'other'>('windows');
+  const [isIOS, setIsIOS] = useState(false);
+  const [os, setOS] = useState<'windows' | 'mac' | 'chromeos' | 'linux' | 'ios' | 'other'>('windows');
 
   useEffect(() => {
     // Detect if already installed as standalone desktop app
@@ -19,9 +20,14 @@ export function usePWAInstall() {
 
     setIsInstalled(isStandalone);
 
-    // Detect OS
+    // Detect OS & iOS
     const ua = window.navigator.userAgent.toLowerCase();
-    if (ua.includes('cros')) {
+    const isIOSDevice = /iphone|ipad|ipod/.test(ua);
+    setIsIOS(isIOSDevice);
+
+    if (isIOSDevice) {
+      setOS('ios');
+    } else if (ua.includes('cros')) {
       setOS('chromeos');
     } else if (ua.includes('mac')) {
       setOS('mac');
@@ -67,6 +73,7 @@ export function usePWAInstall() {
   return {
     isInstallable: !!deferredPrompt,
     isInstalled,
+    isIOS,
     os,
     install,
   };

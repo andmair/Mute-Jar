@@ -56,6 +56,14 @@ export interface CharityAggregator {
   highlight?: boolean;
 }
 
+export interface UserVoiceProfile {
+  medianPitchHz: number; // Fundamental frequency (F0) in Hz (e.g. 135 Hz)
+  pitchRangeHz: [number, number]; // [minPitch, maxPitch] typical vocal band
+  spectralFingerprint: number[]; // 16-band normalized vocal resonance / formant vector
+  calibratedAt: number;
+  sampleCount: number;
+}
+
 export interface UserSettings {
   userName: string;
   userEmail: string;
@@ -70,6 +78,10 @@ export interface UserSettings {
   noiseFloorMargin?: number; // Margin in % above ambient background floor (default: 15)
   calibratedNoiseFloor?: number; // Calibrated ambient room background noise level (0 to 100)
   microphoneMode?: 'near_field' | 'headset' | 'standard'; // Voice proximity profile
+  // Speaker Voice Pattern & Voiceprint Filter
+  userVoiceProfile?: UserVoiceProfile;
+  voiceProfileEnabled?: boolean; // When true, only speech matching the user's voiceprint will trigger MuteCoins
+  voiceMatchThreshold?: number; // Minimum match % (e.g. 65%) to accept as the user's voice
   autoDetectMeetingAudio: boolean;
   autoStartMonitoring: boolean;
   autoStartOnOSBoot: boolean;

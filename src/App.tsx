@@ -17,6 +17,7 @@ import { TargetGoalModal } from './components/TargetGoalModal';
 import { DesktopBackgroundGuideModal } from './components/DesktopBackgroundGuideModal';
 import { UserProfileModal, getAvatarEmoji } from './components/UserProfileModal';
 import { PhilosophyTargetCard } from './components/PhilosophyTargetCard';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import { getPhilosophyCombinedLabel } from './utils/philosophyLabels';
 import { sanitizeUrl } from './utils/security';
 import {
@@ -49,6 +50,7 @@ const MainAppContent: React.FC = () => {
     settings,
     updateSettings,
     scheduledMeetings,
+    formatCurrency,
   } = useMuteJar();
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -115,6 +117,9 @@ const MainAppContent: React.FC = () => {
 
           {/* Zone 3: Primary Action & Controls */}
           <div className="flex items-center gap-2.5 shrink-0">
+            {/* PWA Direct In-App Install Button */}
+            <PWAInstallButton />
+
             {/* User Profile & Avatar Pill */}
             <button
               onClick={() => setIsProfileOpen(true)}
@@ -211,145 +216,203 @@ const MainAppContent: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* Hero Grid: Cartoon Glass Jar on Left, Live Audio Monitor & Controls on Right */}
-        <section id="jar-view" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: The 3D Cartoon Glass Jar */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-            {/* Playful background glows */}
-            <div className="absolute -top-12 -left-12 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Live Audio Monitor Box: Positioned above the Mute Jar & below the profile box */}
+        <section id="monitor-view">
+          <AudioMonitor onOpenCalendarModal={() => setIsCalendarOpen(true)} />
+        </section>
 
-            <CartoonJar />
-          </div>
+        {/* Hero Section: The Mute Jar Box (Merged with Mute Check) */}
+        <section id="jar-view" className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden p-6 sm:p-8">
+          {/* Playful ambient background glows */}
+          <div className="absolute -top-12 -left-12 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Right Column: Monthly Check Banner at top, Audio Monitor, Context, and Goal/Philosophy */}
-          <div className="lg:col-span-7 space-y-5">
-            {/* Top Box: Cycle Mute Check Banner (Moved next to the mute jar image) */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>{cycleNoun} Mute Check · {currentCycle.label}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-300">
-                    You have deposited <strong className="font-mono text-amber-700 dark:text-amber-400 font-bold">{currentMonthCoins} MuteCoins</strong> this {cycleNoun.toLowerCase()}. Review your jar to redeem them toward charities, team pledges, or personal goals!
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setIsReviewOpen(true)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-bold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto"
-              >
-                Open Review ({currentMonthCoins})
-              </button>
+          {/* Side by side layout: Jar on Left, Mute Check on Right */}
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-stretch justify-between gap-6 lg:gap-10">
+            {/* Left Side: 3D Mute Jar shifted to the left with buffer on both sides */}
+            <div className="w-full md:w-auto flex flex-col items-center justify-center px-4 sm:px-8 py-2 shrink-0">
+              <CartoonJar />
             </div>
 
-            {/* Live Audio Engine & Threshold Controller */}
-            <AudioMonitor onOpenCalendarModal={() => setIsCalendarOpen(true)} />
-
-            {/* Philosophy, Defined Goal, and Schedule Context Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-              {/* Left Sub-column: Active Philosophy & Specific Charity/Goal Directly Below It */}
-              <div className="space-y-4 flex flex-col justify-between">
-                {/* Active Philosophy Card */}
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] text-slate-400 font-semibold tracking-wide uppercase">
-                      Active Philosophy
-                    </span>
-                    <button
-                      onClick={() => setIsSettingsOpen(true)}
-                      className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                    >
-                      Change
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
-                      {settings.persona === 'saint' ? (
-                        <Heart className="w-4 h-4 text-sky-500" />
-                      ) : settings.persona === 'roastmaster' ? (
-                        <Crown className="w-4 h-4 text-rose-500" />
-                      ) : (
-                        <Zap className="w-4 h-4 text-amber-500" />
-                      )}
+            {/* Right Side: Merged Mute Check Box (No 'Month' in title) */}
+            <div className="flex-1 w-full min-w-0 flex flex-col justify-between self-stretch py-2">
+              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-amber-500/5 dark:from-amber-950/40 dark:via-slate-800/80 dark:to-slate-900/60 border border-amber-300/80 dark:border-amber-500/30 shadow-xs flex flex-col justify-between gap-5 h-full">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                      <Sparkles className="w-5 h-5" />
                     </div>
-                    <div>
-                      <span className="text-sm font-bold capitalize text-slate-900 dark:text-white block">
-                        {philosophyInfo.title}
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight block">
-                        {philosophyInfo.subtitle}
+                    <div className="min-w-0">
+                      {/* Clean title without 'Month' - date wraps to next line if space is constrained */}
+                      <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
+                        <span className="whitespace-nowrap">Mute Check</span>
+                        <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
+                          <span className="text-slate-400 dark:text-slate-500 mr-1.5">·</span>
+                          {currentCycle.label}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-amber-700 dark:text-amber-300 font-medium block mt-0.5">
+                        Active cycle: {currentCycle.daysRemaining} days remaining
                       </span>
                     </div>
                   </div>
-                </div>
 
-                {/* Tied Target / Goal Box (Specific to Active Philosophy) */}
-                <PhilosophyTargetCard
-                  onOpenEditModal={() => setIsTargetModalOpen(true)}
-                  onOpenReviewModal={() => setIsReviewOpen(true)}
-                />
-              </div>
-
-              {/* Right Sub-column: Meeting Schedule & Context Card with Clear Explanation */}
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] text-slate-400 font-semibold tracking-wide uppercase flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>Meeting Schedule Context</span>
-                    </span>
-                    <button
-                      onClick={() => setIsCalendarOpen(true)}
-                      className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                    >
-                      Manage
-                    </button>
-                  </div>
-
-                  <div className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-                    {settings.activeMeetingTitle || 'Weekly Auto Schedule'}
-                  </div>
-
-                  {/* Clarifying Explanation Inside the Box */}
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <strong className="text-slate-800 dark:text-slate-200 block mb-0.5">
-                      What this does:
-                    </strong>
-                    Automatically detects and tags mute events with your scheduled calls based on current day and time of day.
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Auto-Schedule Active ({scheduledMeetings.length} meetings)</span>
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 self-start sm:self-auto font-mono shrink-0">
+                    {formatCurrency(settings.perCoinValue)} / coin
                   </span>
+                </div>
+
+                {/* Big Highlight Metrics */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-amber-200/80 dark:border-amber-900/50 backdrop-blur-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Coins in Jar
+                    </span>
+                    <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white">
+                      {currentMonthCoins}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Redemption Pool
+                    </span>
+                    <span className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                      {formatCurrency(currentMonthCoins * settings.perCoinValue)}
+                    </span>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Active Path
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">
+                      {philosophyInfo.title}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Narrative Description */}
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  You have deposited <strong className="font-mono text-amber-700 dark:text-amber-400 font-bold">{currentMonthCoins} MuteCoins</strong> this cycle (worth <strong className="font-mono text-amber-700 dark:text-amber-400">{formatCurrency(currentMonthCoins * settings.perCoinValue)}</strong>). Open the review to redeem your accumulated coins toward charities, team shouts, or habit milestone goals!
+                </p>
+
+                {/* CTA Actions Bar */}
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-amber-200/70 dark:border-amber-900/40">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Cycle resets automatically at end of cycle</span>
+                  </div>
+
                   <button
-                    onClick={() => setIsCalendarOpen(true)}
-                    className="font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+                    onClick={() => setIsReviewOpen(true)}
+                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>View Times</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <Gift className="w-4 h-4 text-amber-400 dark:text-amber-600" />
+                    <span>Open Review ({currentMonthCoins})</span>
                   </button>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* Mini Tips Box */}
-            <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-300">
-              <strong className="text-slate-900 dark:text-white block mb-0.5">
-                💡 How Mute Jar works seamlessly:
-              </strong>
-              Keep this tab or background window open during work calls. When speech is detected while on mute, a coin drops into the jar automatically. If you were actually unmuted, click <strong>"Undo"</strong> in the 5-second popup banner.
+        {/* Philosophy, Defined Goal, and Schedule Context Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+          {/* Left Sub-column: Active Philosophy & Specific Charity/Goal Directly Below It */}
+          <div className="space-y-4 flex flex-col justify-between">
+            {/* Active Philosophy Card */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-slate-400 font-semibold tracking-wide uppercase">
+                  Active Philosophy
+                </span>
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                >
+                  Change
+                </button>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                  {settings.persona === 'saint' ? (
+                    <Heart className="w-4 h-4 text-sky-500" />
+                  ) : settings.persona === 'roastmaster' ? (
+                    <Crown className="w-4 h-4 text-rose-500" />
+                  ) : (
+                    <Zap className="w-4 h-4 text-amber-500" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-bold capitalize text-slate-900 dark:text-white block">
+                    {philosophyInfo.title}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight block">
+                    {philosophyInfo.subtitle}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tied Target / Goal Box (Specific to Active Philosophy) */}
+            <PhilosophyTargetCard
+              onOpenEditModal={() => setIsTargetModalOpen(true)}
+              onOpenReviewModal={() => setIsReviewOpen(true)}
+            />
+          </div>
+
+          {/* Right Sub-column: Meeting Schedule & Context Card with Clear Explanation */}
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-slate-400 font-semibold tracking-wide uppercase flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Meeting Schedule Context</span>
+                </span>
+                <button
+                  onClick={() => setIsCalendarOpen(true)}
+                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                >
+                  Manage
+                </button>
+              </div>
+
+              <div className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
+                {settings.activeMeetingTitle || 'Weekly Auto Schedule'}
+              </div>
+
+              {/* Clarifying Explanation Inside the Box */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <strong className="text-slate-800 dark:text-slate-200 block mb-0.5">
+                  What this does:
+                </strong>
+                Automatically detects and tags mute events with your scheduled calls based on current day and time of day.
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Auto-Schedule Active ({scheduledMeetings.length} meetings)</span>
+              </span>
+              <button
+                onClick={() => setIsCalendarOpen(true)}
+                className="font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <span>View Times</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
           </div>
         </section>
+
+        {/* Mini Tips Box */}
+        <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-300">
+          <strong className="text-slate-900 dark:text-white block mb-0.5">
+            💡 How Mute Jar works seamlessly:
+          </strong>
+          Keep this tab or background window open during work calls. When speech is detected while on mute, a coin drops into the jar automatically. If you were actually unmuted, click <strong>"Undo"</strong> in the 5-second popup banner.
+        </div>
 
         {/* Action Tracker Section: When/How actions are followed through */}
         <section id="actions-view">

@@ -5,13 +5,19 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
+  // Unique build ID generated on each compile / production build
+  const buildId = process.env.BUILD_ID || `build-${Date.now()}`;
+
   return {
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(buildId),
+    },
     plugins: [
       react(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg'],
+        includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
           name: 'Mute Jar — Meeting Mute Tracker',
@@ -25,16 +31,28 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+            {
               src: '/icon.svg',
               sizes: '192x192 512x512',
               type: 'image/svg+xml',
               purpose: 'any',
-            },
-            {
-              src: '/icon.svg',
-              sizes: '512x512',
-              type: 'image/svg+xml',
-              purpose: 'maskable',
             },
           ],
           shortcuts: [
@@ -43,14 +61,14 @@ export default defineConfig(() => {
               short_name: 'Jar',
               description: 'View current month mute coin fill',
               url: '/#jar-view',
-              icons: [{ src: '/icon.svg', sizes: '192x192' }],
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
             },
             {
               name: 'Monthly Review',
               short_name: 'Review',
               description: 'Redeem monthly mute coins for charity or pledges',
               url: '/#actions-view',
-              icons: [{ src: '/icon.svg', sizes: '192x192' }],
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
             },
           ],
         },
@@ -61,7 +79,7 @@ export default defineConfig(() => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve('.'),
       },
     },
     server: {
