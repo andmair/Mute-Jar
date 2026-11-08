@@ -188,6 +188,15 @@ export const DesktopBackgroundGuideModal: React.FC<{
                     <strong>Taskbar / Status Bar Pin:</strong> Right-click the Mute Jar icon in your Windows Taskbar and select <strong>"Pin to taskbar"</strong>. When minimized, it continues monitoring audio in the background.
                   </div>
                 </div>
+
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                    4
+                  </span>
+                  <div>
+                    <strong>Windows Focus Assist / Do Not Disturb:</strong> By default, Mute Jar automatically pauses the audio monitor when Windows Focus Assist or DND is active. This can be configured in Global Settings.
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -197,7 +206,7 @@ export const DesktopBackgroundGuideModal: React.FC<{
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
               <div className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
                 <Apple className="w-4 h-4" />
-                <span>macOS Setup Guide</span>
+                <span>macOS Setup &amp; Background Behavior Guide</span>
               </div>
 
               <div className="space-y-2.5 text-slate-600 dark:text-slate-300">
@@ -206,7 +215,7 @@ export const DesktopBackgroundGuideModal: React.FC<{
                     1
                   </span>
                   <div>
-                    <strong>Install as macOS App:</strong> Click <em>Install App</em> (or Chrome Menu &gt; <em>Save and Share</em> &gt; <em>Install Mute Jar</em>).
+                    <strong>Persistent User Data Guarantee:</strong> All your jar settings, profile, Mutecoins, and pledges are stored in local persistent storage. They remain intact across closing, restarting, or rebooting your MacBook until you explicitly wipe them in Settings.
                   </div>
                 </div>
 
@@ -215,7 +224,11 @@ export const DesktopBackgroundGuideModal: React.FC<{
                     2
                   </span>
                   <div>
-                    <strong>Silent Autostart on Mac Login:</strong> Right-click the Mute Jar icon in the macOS Dock &gt; <strong>Options &gt; check "Open at Login"</strong>.
+                    <strong>Minimizing &amp; Hiding (Keep Running in Background):</strong>
+                    <ul className="list-disc list-inside mt-1 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      <li>Use <strong className="text-slate-800 dark:text-slate-200">⌘ + H</strong> (Hide) or yellow minimize button to keep Mute Jar running in the background without cluttering your screen.</li>
+                      <li>In Chrome/PWA apps, closing the window (<strong className="text-slate-800 dark:text-slate-200">⌘ + W</strong>) quits the browser window process. To keep audio monitoring active continuously, keep it hidden or minimized in your Dock.</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -224,7 +237,25 @@ export const DesktopBackgroundGuideModal: React.FC<{
                     3
                   </span>
                   <div>
-                    <strong>Keep in Dock / Minimized:</strong> You can minimize or hide the app (⌘H). The Web Audio background listener remains active throughout all calls.
+                    <strong>Keep in Dock &amp; Autostart on Mac Login:</strong> Right-click the Mute Jar icon in your macOS Dock &gt; <strong>Options &gt; check &quot;Keep in Dock&quot;</strong> and <strong>&quot;Open at Login&quot;</strong>.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                    4
+                  </span>
+                  <div>
+                    <strong>Native Mac Menu Bar Tray App Option:</strong> If you prefer Mute Jar strictly as an icon in your macOS top menu bar (closing window sends it directly to menu bar), check the <em>Package EXE/App</em> tab to build a standalone tray app using Tauri or Electron in one command.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                    5
+                  </span>
+                  <div>
+                    <strong>macOS Focus &amp; Do Not Disturb Integration:</strong> By default, Mute Jar automatically pauses audio monitoring whenever macOS enters Focus Mode (Personal, Work, Sleep) or Do Not Disturb. You can toggle this off in Global Settings.
                   </div>
                 </div>
               </div>
@@ -347,7 +378,20 @@ export const DesktopBackgroundGuideModal: React.FC<{
 
                 <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-1">
                   <div className="font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                    <span>Option 3: Containerized Docker Image</span>
+                    <span>Option 3: macOS Menu Bar Status Item (Tray App)</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold">Menu Bar Only</span>
+                  </div>
+                  <div className="bg-slate-950 text-amber-400 p-2 rounded-lg font-mono text-[10px] overflow-x-auto">
+                    npx nativefier --name &quot;MuteJar&quot; --tray --hide-window-on-close &quot;http://localhost:3000&quot;
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    With <code className="font-mono">--tray --hide-window-on-close</code>, closing the window minimizes Mute Jar to your macOS top menu bar / Windows tray icon where clicking it re-opens the app instantly.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <div className="font-bold text-slate-900 dark:text-white flex items-center justify-between">
+                    <span>Option 4: Containerized Docker Image</span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold">Self-Hosted</span>
                   </div>
                   <div className="bg-slate-950 text-amber-400 p-2 rounded-lg font-mono text-[10px] overflow-x-auto">

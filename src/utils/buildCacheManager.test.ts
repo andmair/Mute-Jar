@@ -48,20 +48,24 @@ describe('buildCacheManager', () => {
     expect(globalThis.localStorage.getItem('mutejar_settings_v1')).toBeTruthy();
   });
 
-  it('automatically purges all local storage when a new build ID is detected', () => {
+  it('preserves user settings, mutes, and profile data when a new build ID is detected', () => {
     // Simulate data from old build
     globalThis.localStorage.setItem('mutejar_app_build_id', 'old-build-v1.0.0');
-    globalThis.localStorage.setItem('mutejar_settings_v1', JSON.stringify({ oldSetting: true }));
-    globalThis.localStorage.setItem('mutejar_mutes_v1', JSON.stringify([{ id: 'm1' }]));
+    globalThis.localStorage.setItem('mutejar_settings_v1', JSON.stringify({ userName: 'Alex', persona: 'saint' }));
+    globalThis.localStorage.setItem('mutejar_mutes_v1', JSON.stringify([{ id: 'm1', meetingTitle: 'Sprint Retro' }]));
     globalThis.sessionStorage.setItem('temp_session_data', '12345');
 
     const result = syncBuildAndPurgeCache();
-    expect(result.wasPurged).toBe(true);
+    expect(result.wasPurged).toBe(false);
     expect(result.previousBuildId).toBe('old-build-v1.0.0');
 
-    // Stale data must be completely wiped
-    expect(globalThis.localStorage.getItem('mutejar_settings_v1')).toBeNull();
-    expect(globalThis.localStorage.getItem('mutejar_mutes_v1')).toBeNull();
+    // User settings and mute history must persist!
+    expect(globalThis.localStorage.getItem('mutejar_settings_v1')).toBeTruthy();
+    expect(globalThis.localStorage.getItem('mutejar_mutes_v1')).toBeTruthy();
+    const savedSettings = JSON.parse(globalThis.localStorage.getItem('mutejar_settings_v1') || '{}');
+    expect(savedSettings.userName).toBe('Alex');
+
+    // Temporary session data should be cleared
     expect(globalThis.sessionStorage.getItem('temp_session_data')).toBeNull();
 
     // The new build ID must now be registered

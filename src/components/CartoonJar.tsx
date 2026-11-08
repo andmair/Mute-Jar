@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMuteJar } from '../context/MuteJarContext';
-import { Sparkles, MicOff, Plus, Heart, Zap, Crown, Coins, Edit2, Check } from 'lucide-react';
+import { Sparkles, MicOff, Plus, Heart, Zap, Crown, Coins, Edit2, Check, Target } from 'lucide-react';
 
 export const CartoonJar: React.FC = () => {
   const { currentMonthCoins, settings, updateSettings, activeGraceRecord, testCoinDrop, formatCurrency } = useMuteJar();
@@ -222,7 +222,7 @@ export const CartoonJar: React.FC = () => {
                   className={`relative w-8 h-8 rounded-full coin-shimmer border-2 border-amber-200 flex items-center justify-center shadow-md ${
                     isRecent ? 'ring-2 ring-amber-300 ring-offset-1 animate-bounce' : ''
                   }`}
-                  title={`MuteCoin #${idx + 1}`}
+                  title={`Mutecoin #${idx + 1}`}
                 >
                   <div className="w-6 h-6 rounded-full border border-amber-700/40 flex items-center justify-center">
                     <MicOff className="w-3.5 h-3.5 text-amber-950" />
@@ -248,66 +248,94 @@ export const CartoonJar: React.FC = () => {
         <div className="w-70 h-6 bg-slate-900/25 dark:bg-black/70 rounded-full blur-md mt-1.5" />
       </div>
 
-      {/* Prominent Running Total Badge: "X MuteCoins worth Y Currency" */}
+      {/* Prominent Running Total / Goal Milestone Badge */}
       <div className="mt-5 w-full bg-white dark:bg-slate-900 border-2 border-amber-400/70 dark:border-amber-500/50 rounded-2xl p-4 shadow-md text-center space-y-2.5">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-8 h-8 rounded-full coin-shimmer flex items-center justify-center border border-amber-200 shadow-xs">
-            <Coins className="w-4.5 h-4.5 text-amber-950" />
-          </div>
-          <div className="text-sm font-extrabold text-slate-900 dark:text-white">
-            <span className="font-mono text-base text-amber-600 dark:text-amber-400 font-black">{currentMonthCoins} MuteCoins</span>
-            <span className="text-slate-400 mx-2 font-medium">worth</span>
-            <span className="font-mono text-base text-emerald-600 dark:text-emerald-400 font-black">{runningTotalFormatted}</span>
-          </div>
-        </div>
-
-        {/* Editable MuteCoin Exchange Rate Pill */}
-        <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
-          <span className="font-medium">Exchange Rate:</span>
-
-          {!isEditingRate ? (
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                1 Coin = {formatCurrency(settings.perCoinValue)}
-              </span>
-              <button
-                onClick={() => setIsEditingRate(true)}
-                className="p-1 text-amber-700 hover:text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
-                title="Edit coin exchange rate"
-                aria-label="Edit coin exchange rate"
-              >
-                <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
+        {settings.persona === 'saint' ? (
+          <>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8 rounded-full coin-shimmer flex items-center justify-center border border-amber-200 shadow-xs">
+                <Coins className="w-4.5 h-4.5 text-amber-950" />
+              </div>
+              <div className="text-sm font-extrabold text-slate-900 dark:text-white">
+                <span className="font-mono text-base text-amber-600 dark:text-amber-400 font-black">{currentMonthCoins} Mutecoins</span>
+                <span className="text-slate-400 mx-2 font-medium">worth</span>
+                <span className="font-mono text-base text-emerald-600 dark:text-emerald-400 font-black">{runningTotalFormatted}</span>
+              </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <label htmlFor="temp-coin-rate-input" className="sr-only">
-                Coin exchange rate in {settings.currency}
-              </label>
-              <span className="font-bold text-slate-700 dark:text-slate-300">
-                {settings.currency}
-              </span>
-              <input
-                id="temp-coin-rate-input"
-                type="number"
-                min="0.1"
-                step="0.5"
-                value={tempRate}
-                onChange={(e) => setTempRate(e.target.value)}
-                className="w-16 p-1 text-xs rounded border border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-amber-500"
-                autoFocus
-              />
-              <button
-                onClick={handleSaveRate}
-                className="p-1.5 bg-amber-500 text-slate-950 rounded-md hover:bg-amber-600 font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
-                title="Save Rate"
-                aria-label="Save coin exchange rate"
-              >
-                <Check className="w-3.5 h-3.5" aria-hidden="true" />
-              </button>
+
+            {/* Editable Mutecoin Exchange Rate Pill for Charity Donations */}
+            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+              <span className="font-medium">Exchange Rate:</span>
+
+              {!isEditingRate ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                    1 Coin = {formatCurrency(settings.perCoinValue)}
+                  </span>
+                  <button
+                    onClick={() => setIsEditingRate(true)}
+                    className="p-1 text-amber-700 hover:text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
+                    title="Edit coin exchange rate"
+                    aria-label="Edit coin exchange rate"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <label htmlFor="temp-coin-rate-input" className="sr-only">
+                    Coin exchange rate in {settings.currency}
+                  </label>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    {settings.currency}
+                  </span>
+                  <input
+                    id="temp-coin-rate-input"
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    value={tempRate}
+                    onChange={(e) => setTempRate(e.target.value)}
+                    className="w-16 p-1 text-xs rounded border border-amber-400 dark:border-amber-600 bg-amber-50/50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-amber-500"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveRate}
+                    className="p-1.5 bg-amber-500 text-slate-950 rounded-md hover:bg-amber-600 font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500"
+                    title="Save Rate"
+                    aria-label="Save coin exchange rate"
+                  >
+                    <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Goal-Focused Running Badge (No Currency) */}
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center border border-amber-400/40 shadow-xs">
+                <Target className="w-4.5 h-4.5" />
+              </div>
+              <div className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                <span className="font-mono text-base text-amber-600 dark:text-amber-400 font-black">{currentMonthCoins}</span>
+                <span className="text-slate-400 mx-1.5 font-medium">/</span>
+                <span className="font-mono text-base text-slate-800 dark:text-slate-200 font-black">
+                  {settings.persona === 'roastmaster' ? (settings.roastTargetCoins || 15) : (settings.pragmatistTargetCoins || 25)} Coins
+                </span>
+              </div>
+            </div>
+
+            {/* Current Goal Milestone Display */}
+            <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 gap-2">
+              <span className="font-medium shrink-0">Current Goal:</span>
+              <span className="font-bold text-slate-900 dark:text-white truncate text-right">
+                {settings.persona === 'roastmaster' ? settings.roastActivityTitle : settings.pragmatistGoalTitle}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

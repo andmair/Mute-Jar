@@ -5,8 +5,9 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
-  // Unique build ID generated on each compile / production build
-  const buildId = process.env.BUILD_ID || `build-${Date.now()}`;
+  // Stable build ID: defaults to version so user data persists across app restarts/reloads.
+  // Data is only purged if the user explicitly triggers a profile wipe or a major version bump occurs.
+  const buildId = process.env.BUILD_ID || 'v1.0.0';
 
   return {
     define: {

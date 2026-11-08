@@ -1,5 +1,69 @@
 import { UserVoiceProfile } from '../types';
 
+export interface SystemSoundOption {
+  id: string;
+  name: string;
+  description: string;
+  platform: 'mac' | 'windows' | 'retro' | 'minimal' | 'classic';
+}
+
+export const SYSTEM_SOUND_OPTIONS: SystemSoundOption[] = [
+  {
+    id: 'glass_clink',
+    name: 'Glass Jar Clink (Classic)',
+    description: 'Playful cartoon glass ping with warm jar resonance',
+    platform: 'classic',
+  },
+  {
+    id: 'mac_ping',
+    name: 'macOS Ping',
+    description: 'Crisp, high-frequency Apple system chime (1760 Hz)',
+    platform: 'mac',
+  },
+  {
+    id: 'mac_pop',
+    name: 'macOS Pop',
+    description: 'Subtle bubbly wooden drop, discreet for meetings',
+    platform: 'mac',
+  },
+  {
+    id: 'mac_tink',
+    name: 'macOS Tink',
+    description: 'Delicate high crystal glassware tink',
+    platform: 'mac',
+  },
+  {
+    id: 'mac_purr',
+    name: 'macOS Purr',
+    description: 'Soft double low-frequency pulse',
+    platform: 'mac',
+  },
+  {
+    id: 'windows_chime',
+    name: 'Windows Notification',
+    description: 'Friendly ascending two-note system chime (C5-E5)',
+    platform: 'windows',
+  },
+  {
+    id: 'zen_marimba',
+    name: 'Zen Marimba (Discreet)',
+    description: 'Muffled acoustic wooden bar, distraction-free',
+    platform: 'minimal',
+  },
+  {
+    id: 'arcade_blip',
+    name: 'Arcade Mutecoin Jump',
+    description: 'Retro 8-bit coin insert upward blip',
+    platform: 'retro',
+  },
+  {
+    id: 'cash_register',
+    name: 'Cash Register "Cha-Ching"',
+    description: 'Mechanical drawer click & spring bell chime',
+    platform: 'classic',
+  },
+];
+
 /**
  * 16 Logarithmically-spaced frequency bands (90 Hz to 6200 Hz)
  * covering fundamental speech frequencies and vocal tract formants F1, F2, F3.
@@ -201,16 +265,18 @@ class AudioEngine {
     ) => void
   ) | null = null;
 
-  // Sound FX settings
-  private soundEnabled: boolean = true;
+  // Sound FX settings (Default: OFF when audio monitor enabled as requested)
+  private soundEnabled: boolean = false;
   private soundVolume: number = 0.7;
+  private soundId: string = 'glass_clink';
 
   // Base sensitivity 1 (least sensitive) to 10 (most sensitive)
   private sensitivity: number = 6;
 
-  public setSoundSettings(enabled: boolean, volume: number) {
+  public setSoundSettings(enabled: boolean, volume: number, soundId: string = 'glass_clink') {
     this.soundEnabled = enabled;
     this.soundVolume = Math.max(0, Math.min(1, volume));
+    this.soundId = soundId || 'glass_clink';
   }
 
   public setSensitivity(sensitivity: number) {
@@ -260,14 +326,17 @@ class AudioEngine {
   }
 
   /**
-   * Synthesize a playful cartoon glass coin drop & chime sound using Web Audio API oscillators.
-   * Completely offline, zero asset files needed.
+   * Synthesize selectable system sound FX for Mutecoin deposit.
+   * Offline, immediate, zero external asset downloads needed.
    */
-  public playCoinSound() {
-    if (!this.soundEnabled) return;
+  public playSoundFx(soundId: string = 'glass_clink', overrideEnabled: boolean = false) {
+    if (!this.soundEnabled && !overrideEnabled) return;
 
     try {
-      const ctx = this.audioCtx || new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx =
+        this.audioCtx ||
+        new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
@@ -277,57 +346,220 @@ class AudioEngine {
       masterGain.gain.setValueAtTime(this.soundVolume * 0.45, now);
       masterGain.connect(ctx.destination);
 
-      // Primary bright metallic clink (High pitch chime)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(2150, now);
-      osc1.frequency.exponentialRampToValueAtTime(1400, now + 0.12);
+      switch (soundId) {
+        case 'mac_ping': {
+          // macOS Classic System Ping: High, clean pure sine bell at 1760 Hz (A6)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1760, now);
+          gain.gain.setValueAtTime(0.85, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.58);
+          break;
+        }
 
-      gain1.gain.setValueAtTime(0.8, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        case 'mac_pop': {
+          // macOS Classic System Pop: Bubbly wooden drop (580Hz -> 140Hz)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(580, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.045);
+          gain.gain.setValueAtTime(0.85, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.06);
+          break;
+        }
 
-      osc1.connect(gain1);
-      gain1.connect(masterGain);
+        case 'mac_tink': {
+          // macOS Classic Tink: High crystal glassware clink (3136 Hz)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(3136, now);
+          gain.gain.setValueAtTime(0.7, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.24);
+          break;
+        }
 
-      // Secondary coin resonance chime (Two-tone glass ping)
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(2880, now + 0.04);
-      osc2.frequency.exponentialRampToValueAtTime(1920, now + 0.25);
+        case 'mac_purr': {
+          // macOS Purr: Two gentle low-mid sine pulses
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(320, now);
+          gain1.gain.setValueAtTime(0.6, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + 0.05);
 
-      gain2.gain.setValueAtTime(0.001, now);
-      gain2.gain.setValueAtTime(0.9, now + 0.04);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(260, now + 0.035);
+          gain2.gain.setValueAtTime(0.001, now);
+          gain2.gain.setValueAtTime(0.5, now + 0.035);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now + 0.035);
+          osc2.stop(now + 0.09);
+          break;
+        }
 
-      osc2.connect(gain2);
-      gain2.connect(masterGain);
+        case 'windows_chime': {
+          // Windows Notification Chime: Ascending two notes (C5 523Hz -> E5 659Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(523.25, now);
+          gain1.gain.setValueAtTime(0.65, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + 0.13);
 
-      // Glass jar resonance body (warm cartoon low-mid harmonic)
-      const osc3 = ctx.createOscillator();
-      const gain3 = ctx.createGain();
-      osc3.type = 'sine';
-      osc3.frequency.setValueAtTime(740, now);
-      osc3.frequency.exponentialRampToValueAtTime(420, now + 0.18);
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(659.25, now + 0.09);
+          gain2.gain.setValueAtTime(0.001, now);
+          gain2.gain.setValueAtTime(0.75, now + 0.09);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now + 0.09);
+          osc2.stop(now + 0.36);
+          break;
+        }
 
-      gain3.gain.setValueAtTime(0.5, now);
-      gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        case 'zen_marimba': {
+          // Zen Acoustic Marimba: Warm wooden bar tap (A4 440Hz), minimal distraction
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.8, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+        }
 
-      osc3.connect(gain3);
-      gain3.connect(masterGain);
+        case 'arcade_blip': {
+          // Arcade 8-Bit Mutecoin: Retro upward coin jump arpeggio (B5 -> E6)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(987.77, now);
+          osc.frequency.setValueAtTime(1318.51, now + 0.05);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.23);
+          break;
+        }
 
-      osc1.start(now);
-      osc1.stop(now + 0.3);
+        case 'cash_register': {
+          // Cash Register "Cha-Ching": Metallic slide + dual spring bell
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(1864, now);
+          gain1.gain.setValueAtTime(0.7, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + 0.38);
 
-      osc2.start(now + 0.04);
-      osc2.stop(now + 0.48);
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(2489, now + 0.03);
+          gain2.gain.setValueAtTime(0.001, now);
+          gain2.gain.setValueAtTime(0.7, now + 0.03);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now + 0.03);
+          osc2.stop(now + 0.48);
+          break;
+        }
 
-      osc3.start(now);
-      osc3.stop(now + 0.25);
+        case 'glass_clink':
+        default: {
+          // Classic Cartoon Glass Mutecoin Drop: Metallic clink + chime + jar resonance
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(2150, now);
+          osc1.frequency.exponentialRampToValueAtTime(1400, now + 0.12);
+          gain1.gain.setValueAtTime(0.8, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(2880, now + 0.04);
+          osc2.frequency.exponentialRampToValueAtTime(1920, now + 0.25);
+          gain2.gain.setValueAtTime(0.001, now);
+          gain2.gain.setValueAtTime(0.9, now + 0.04);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'sine';
+          osc3.frequency.setValueAtTime(740, now);
+          osc3.frequency.exponentialRampToValueAtTime(420, now + 0.18);
+          gain3.gain.setValueAtTime(0.5, now);
+          gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc3.connect(gain3);
+          gain3.connect(masterGain);
+
+          osc1.start(now);
+          osc1.stop(now + 0.3);
+          osc2.start(now + 0.04);
+          osc2.stop(now + 0.48);
+          osc3.start(now);
+          osc3.stop(now + 0.25);
+          break;
+        }
+      }
     } catch (e) {
       console.warn('Audio synthesis warning:', e);
     }
+  }
+
+  public playCoinSound(soundId?: string) {
+    if (!this.soundEnabled) return;
+    this.playSoundFx(soundId || this.soundId, false);
+  }
+
+  public playPreviewSound(soundId?: string) {
+    this.playSoundFx(soundId || this.soundId, true);
   }
 
   /**

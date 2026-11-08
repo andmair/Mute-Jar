@@ -24,6 +24,7 @@ import {
   Waves,
   Trash2,
   Fingerprint,
+  Moon,
 } from 'lucide-react';
 
 export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
@@ -128,7 +129,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold leading-tight truncate">
-                    MuteCoin Added · {activeGraceRecord.meetingTitle}
+                    Mutecoin Added · {activeGraceRecord.meetingTitle}
                   </div>
                   <div className="text-[11px] font-medium opacity-90">
                     Auto-confirming in {graceSecondsLeft}s...
@@ -187,11 +188,21 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                   />
                   <span>{audioState.isListening ? 'Live' : 'Paused'}</span>
                 </span>
+
+                {/* OS Focus / Do Not Disturb Mode Active Badge */}
+                {audioState.isDoNotDisturbActive && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                    <Moon className="w-3 h-3 text-purple-500 animate-pulse" />
+                    <span>Focus / DND Active</span>
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {audioState.isListening
                   ? 'Distinguishing near-field desk speech from ambient background noise'
-                  : 'Monitoring paused · Auto-starts on launch'}
+                  : audioState.isDoNotDisturbActive && settings.pauseOnDoNotDisturb !== false
+                  ? 'Paused automatically by OS Focus / Do Not Disturb Mode'
+                  : 'Monitoring off by default · Click Start to begin tracking'}
               </p>
             </div>
           </div>
@@ -738,7 +749,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                             Capture Your Personal Voice Pattern (3.5s)
                           </div>
                           <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                            Tired of background podcasts, radios, or room talkers triggering Mute Coins? Train the engine to recognize your fundamental pitch ($F_0$) and vocal tract formants.
+                            Tired of background podcasts, radios, or room talkers triggering Mutecoins? Train the engine to recognize your fundamental pitch ($F_0$) and vocal tract formants.
                           </div>
                         </div>
                       </div>

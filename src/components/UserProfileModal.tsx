@@ -132,6 +132,62 @@ export const UserProfileModal: React.FC<{
             />
           </div>
 
+          {/* Philosophy / Redemption Path Selection */}
+          <div>
+            <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5">
+              Redemption Path &amp; Goals
+            </label>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => updateSettings({ persona: 'saint' })}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                  settings.persona === 'saint'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200 font-bold shadow-xs ring-1 ring-sky-500/40'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                <div className="p-1.5 rounded-lg bg-sky-500 text-white shadow-2xs">
+                  <Heart className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-bold text-[11px]">The Saint</span>
+                <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">Charity Donations</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateSettings({ persona: 'pragmatist' })}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                  settings.persona === 'pragmatist'
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 font-bold shadow-xs ring-1 ring-amber-500/40'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                <div className="p-1.5 rounded-lg bg-amber-500 text-white shadow-2xs">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-bold text-[11px]">Habit Builder</span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Habit Goals</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateSettings({ persona: 'roastmaster' })}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 focus-visible:ring-2 focus-visible:ring-rose-500 ${
+                  settings.persona === 'roastmaster'
+                    ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 font-bold shadow-xs ring-1 ring-rose-500/40'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                <div className="p-1.5 rounded-lg bg-rose-500 text-white shadow-2xs">
+                  <Crown className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-bold text-[11px]">Roast Master</span>
+                <span className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">Team Fun Goals</span>
+              </button>
+            </div>
+          </div>
+
           {/* Avatar Selector Grid */}
           <fieldset>
             <legend className="block text-xs font-bold text-slate-900 dark:text-white mb-2">

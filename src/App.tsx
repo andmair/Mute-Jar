@@ -51,6 +51,7 @@ const MainAppContent: React.FC = () => {
     updateSettings,
     scheduledMeetings,
     formatCurrency,
+    audioState,
   } = useMuteJar();
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -197,9 +198,25 @@ const MainAppContent: React.FC = () => {
                 </button>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Auto-Start Active</span>
+                <span
+                  className={`flex items-center gap-1.5 font-semibold text-[11px] ${
+                    audioState.isListening
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      audioState.isListening ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                    }`}
+                  />
+                  <span>
+                    {audioState.isListening
+                      ? 'Monitor Live'
+                      : audioState.isDoNotDisturbActive && settings.pauseOnDoNotDisturb !== false
+                      ? 'Monitor Paused (OS Focus Mode)'
+                      : 'Monitor Off (Paused)'}
+                  </span>
                 </span>
                 <span>•</span>
                 <span className="font-semibold text-amber-700 dark:text-amber-300 text-[11px]">
@@ -210,12 +227,28 @@ const MainAppContent: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <div className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-2">
-              <span className="text-slate-600 dark:text-slate-300 font-medium">Exchange Rate:</span>
-              <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
-                1 Coin = {settings.currency}{settings.perCoinValue.toFixed(2)}
-              </span>
-            </div>
+            {settings.persona === 'saint' ? (
+              <div className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-2">
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Exchange Rate:</span>
+                <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
+                  1 Coin = {settings.currency}{settings.perCoinValue.toFixed(2)}
+                </span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsTargetModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-semibold flex items-center gap-2 hover:border-amber-400 transition-colors cursor-pointer group"
+                title="Click to view or edit target goal"
+              >
+                <Target className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[170px] sm:max-w-[240px]">
+                  Goal: {settings.persona === 'roastmaster' ? settings.roastActivityTitle : settings.pragmatistGoalTitle}
+                </span>
+                <span className="font-mono font-bold text-amber-800 dark:text-amber-300 shrink-0">
+                  ({settings.persona === 'roastmaster' ? (settings.roastTargetCoins || 15) : (settings.pragmatistTargetCoins || 25)} coins)
+                </span>
+              </button>
+            )}
           </div>
         </div>
         {/* Live Audio Monitor Box: Positioned above the Mute Jar & below the profile box */}
@@ -260,9 +293,15 @@ const MainAppContent: React.FC = () => {
                     </div>
                   </div>
 
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 self-start sm:self-auto font-mono shrink-0">
-                    {formatCurrency(settings.perCoinValue)} / coin
-                  </span>
+                  {settings.persona === 'saint' ? (
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 self-start sm:self-auto font-mono shrink-0">
+                      {formatCurrency(settings.perCoinValue)} / coin
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 self-start sm:self-auto font-mono shrink-0">
+                      Target: {settings.persona === 'roastmaster' ? (settings.roastTargetCoins || 15) : (settings.pragmatistTargetCoins || 25)} coins
+                    </span>
+                  )}
                 </div>
 
                 {/* Big Highlight Metrics */}
@@ -277,11 +316,17 @@ const MainAppContent: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Redemption Pool
+                      {settings.persona === 'saint' ? 'Redemption Pool' : 'Goal Target'}
                     </span>
-                    <span className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
-                      {formatCurrency(currentMonthCoins * settings.perCoinValue)}
-                    </span>
+                    {settings.persona === 'saint' ? (
+                      <span className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                        {formatCurrency(currentMonthCoins * settings.perCoinValue)}
+                      </span>
+                    ) : (
+                      <span className="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                        {settings.persona === 'roastmaster' ? (settings.roastTargetCoins || 15) : (settings.pragmatistTargetCoins || 25)} coins
+                      </span>
+                    )}
                   </div>
                   <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">
@@ -295,7 +340,15 @@ const MainAppContent: React.FC = () => {
 
                 {/* Narrative Description */}
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  You have deposited <strong className="font-mono text-amber-700 dark:text-amber-400 font-bold">{currentMonthCoins} MuteCoins</strong> this cycle (worth <strong className="font-mono text-amber-700 dark:text-amber-400">{formatCurrency(currentMonthCoins * settings.perCoinValue)}</strong>). Open the review to redeem your accumulated coins toward charities, team shouts, or habit milestone goals!
+                  {settings.persona === 'saint' ? (
+                    <>
+                      You have deposited <strong className="font-mono text-amber-700 dark:text-amber-400 font-bold">{currentMonthCoins} Mutecoins</strong> this cycle (worth <strong className="font-mono text-amber-700 dark:text-amber-400">{formatCurrency(currentMonthCoins * settings.perCoinValue)}</strong>). Open the review to redeem your accumulated coins toward charitable causes!
+                    </>
+                  ) : (
+                    <>
+                      You have deposited <strong className="font-mono text-amber-700 dark:text-amber-400 font-bold">{currentMonthCoins} Mutecoins</strong> toward your goal of <strong className="font-bold text-slate-800 dark:text-slate-200">{settings.persona === 'roastmaster' ? settings.roastActivityTitle : settings.pragmatistGoalTitle}</strong> ({settings.persona === 'roastmaster' ? (settings.roastTargetCoins || 15) : (settings.pragmatistTargetCoins || 25)} coins target).
+                    </>
+                  )}
                 </p>
 
                 {/* CTA Actions Bar */}

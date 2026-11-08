@@ -98,7 +98,7 @@ export const PersonaChangePromptModal: React.FC<PersonaChangePromptModalProps> =
               </span>
             </div>
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-              You already have <strong>{currentCycleCoins} mute coins</strong> deposited in your active jar. Your redemption path is currently locked to <strong>{currentInfo.title}</strong>.
+              You already have <strong>{currentCycleCoins} Mutecoins</strong> deposited in your active jar. Your redemption path is currently locked to <strong>{currentInfo.title}</strong>.
             </p>
           </div>
 

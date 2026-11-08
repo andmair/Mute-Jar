@@ -74,6 +74,7 @@ export interface UserSettings {
   persona: PersonaType;
   soundEnabled: boolean;
   soundVolume: number; // 0 to 1
+  depositSoundId?: string; // System sound effect for Mutecoin deposits (default: 'glass_clink')
   sensitivity: number; // 1 to 10
   filterBackgroundNoise?: boolean; // Reject ambient background noise and far-field speech
   filterRadioBackground?: boolean; // Alias for backward compatibility
@@ -82,11 +83,13 @@ export interface UserSettings {
   microphoneMode?: 'near_field' | 'headset' | 'standard'; // Voice proximity profile
   // Speaker Voice Pattern & Voiceprint Filter
   userVoiceProfile?: UserVoiceProfile;
-  voiceProfileEnabled?: boolean; // When true, only speech matching the user's voiceprint will trigger MuteCoins
+  voiceProfileEnabled?: boolean; // When true, only speech matching the user's voiceprint will trigger Mutecoins
   voiceMatchThreshold?: number; // Minimum match % (e.g. 65%) to accept as the user's voice
   autoDetectMeetingAudio: boolean;
   autoStartMonitoring: boolean;
   autoStartOnOSBoot: boolean;
+  minimizeToTray?: boolean; // When closing or minimizing, keep active in system tray / status bar
+  pauseOnDoNotDisturb?: boolean; // When true, pause audio monitor when OS focus or Do Not Disturb is active (default: true)
   reminderDay: number; // day of month (e.g. 28)
   reminderHour: number; // 0 to 23
   country: string;
@@ -98,15 +101,15 @@ export interface UserSettings {
   customCharityUrl?: string;
   customCharityName?: string;
   selectedCharityId?: string;
-  saintTargetCoins?: number; // target threshold in MuteCoins to trigger donation
+  saintTargetCoins?: number; // target threshold in Mutecoins to trigger donation
 
   pragmatistGoalTitle?: string;
   pragmatistGoalDescription?: string;
-  pragmatistTargetCoins?: number; // target in MuteCoins (not currency)
+  pragmatistTargetCoins?: number; // target in Mutecoins (not currency)
 
   roastActivityTitle?: string;
   roastActivityDescription?: string;
-  roastTargetCoins?: number; // target in MuteCoins (not currency)
+  roastTargetCoins?: number; // target in Mutecoins (not currency)
 
   philosophyLabelStyle?: 'improved' | 'classic';
 

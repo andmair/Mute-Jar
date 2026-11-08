@@ -45,7 +45,7 @@ export const OnboardingModal: React.FC = () => {
             customCharityName: 'GlobalGiving Crisis & Education Fund',
             saintTargetCoins: 20,
             activeTargetTitle: 'Donation Target: GlobalGiving',
-            activeTargetDescription: 'Donation threshold set at 20 MuteCoins for global humanitarian relief.',
+            activeTargetDescription: 'Donation threshold set at 20 Mutecoins for global humanitarian relief.',
           }
         : selectedPersona === 'roastmaster'
         ? {
@@ -55,16 +55,16 @@ export const OnboardingModal: React.FC = () => {
             roastTargetCoins: 15,
             activeTargetTitle: 'Friday Gourmet Donuts & Coffee for the Team',
             activeTargetDescription:
-              'Treating the team to pastries & coffee for every 15 mute coins accumulated.',
+              'Treating the team to pastries & coffee for every 15 mutecoins accumulated.',
           }
         : {
             pragmatistGoalTitle: '50 Pushups & 100 Pages Read',
             pragmatistGoalDescription:
-              'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.',
+              'Perform 5 pushups and read 10 book pages for every mutecoin dropped this month.',
             pragmatistTargetCoins: 25,
             activeTargetTitle: '50 Pushups & 100 Pages Read',
             activeTargetDescription:
-              'Convert each mute coin into personal growth, fitness, and daily reading habits.',
+              'Convert each mutecoin into personal growth, fitness, and daily reading habits.',
           };
 
     updateSettings({
@@ -80,7 +80,7 @@ export const OnboardingModal: React.FC = () => {
       id: 'saint' as PersonaType,
       title: 'The Saint',
       tagline: 'Charity & Giving',
-      description: 'Turn awkward meeting slip-ups into real good. Each mute coin funds charitable donations to global causes.',
+      description: 'Turn awkward meeting slip-ups into real good. Each mutecoin funds charitable donations to global causes.',
       icon: Heart,
       accent: 'border-sky-400 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200',
       badge: 'bg-sky-500 text-white',
@@ -91,11 +91,11 @@ export const OnboardingModal: React.FC = () => {
       title: 'The Habit Builder',
       subtitle: '(formerly The Pragmatist)',
       tagline: 'Productivity & Growth',
-      description: 'Make yourself better with every mute. Convert mute coins into pushup reps, book pages, and focused habit streaks.',
+      description: 'Make yourself better with every mute. Convert mutecoins into pushup reps, book pages, and focused habit streaks.',
       icon: Zap,
       accent: 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200',
       badge: 'bg-amber-500 text-white',
-      benefit: 'Tracks personal growth & fitness goals with 25 mutecoin milestone',
+      benefit: 'Tracks personal growth & fitness goals with 25 Mutecoin milestone',
     },
     {
       id: 'roastmaster' as PersonaType,
@@ -106,7 +106,7 @@ export const OnboardingModal: React.FC = () => {
       icon: Crown,
       accent: 'border-rose-400 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200',
       badge: 'bg-rose-500 text-white',
-      benefit: 'Sets team treat dares & funny forfeits with 15 mutecoin trigger',
+      benefit: 'Sets team treat dares & funny forfeits with 15 Mutecoin trigger',
     },
   ];
 
@@ -244,7 +244,7 @@ export const OnboardingModal: React.FC = () => {
                     Choose Your Mute Philosophy
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Select the persona that guides your monthly mute coin pledges and jar styling. You can change this anytime.
+                    Select the persona that guides your monthly Mutecoin pledges and jar styling. You can change this anytime.
                   </p>
                 </div>
 

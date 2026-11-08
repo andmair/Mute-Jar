@@ -23,9 +23,13 @@ import {
   CheckCircle2,
   RefreshCw,
   HardDrive,
+  Moon,
+  BellOff,
+  Play,
 } from 'lucide-react';
 import { POPULAR_CURRENCIES, detectLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
 import { getCurrentBuildId, purgeAllLocalCacheNow } from '../utils/buildCacheManager';
+import { SYSTEM_SOUND_OPTIONS } from '../utils/audioEngine';
 
 export const SettingsModal: React.FC<{
   isOpen: boolean;
@@ -39,6 +43,8 @@ export const SettingsModal: React.FC<{
     deleteUserProfileAndWipeAllData,
     calibrateRoomNoise,
     audioState,
+    toggleDoNotDisturb,
+    playPreviewSound,
     currentCycle,
     cycleNoun,
     requestPersonaChange,
@@ -209,14 +215,22 @@ export const SettingsModal: React.FC<{
           </div>
 
           {/* Sound & Audio Calibration */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3.5">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-900 dark:text-white">
-                Sound FX on Coin Deposit
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                  Sound FX on Mutecoin Deposit
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">
+                  {settings.soundEnabled ? 'Active' : 'Off by default'}
+                </span>
+              </div>
               <button
+                type="button"
                 onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
-                className="cursor-pointer"
+                className="cursor-pointer p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                title={settings.soundEnabled ? 'Mute deposit sound fx' : 'Enable deposit sound fx'}
+                aria-label="Toggle deposit sound effect"
               >
                 {settings.soundEnabled ? (
                   <Volume2 className="w-4 h-4 text-amber-500" />
@@ -224,6 +238,60 @@ export const SettingsModal: React.FC<{
                   <VolumeX className="w-4 h-4 text-slate-400" />
                 )}
               </button>
+            </div>
+
+            {/* Toggle Switch */}
+            <label className="flex items-start justify-between gap-3 cursor-pointer select-none">
+              <div className="space-y-0.5">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
+                  Play deposit sound effect on muted speech
+                </span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  Disabled by default to avoid interrupting meetings. Enable to hear your chosen system sound whenever a Mutecoin is dropped.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.soundEnabled ?? false}
+                onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+                className="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
+              />
+            </label>
+
+            {/* Selectable System Sound FX with 1-Click Preview */}
+            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/60 space-y-1.5">
+              <label className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                <span>Deposit System Sound FX</span>
+                <span className="text-[10px] text-slate-400 font-normal">Synthesized Web Audio</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={settings.depositSoundId || 'glass_clink'}
+                  onChange={(e) => {
+                    const soundId = e.target.value;
+                    updateSettings({ depositSoundId: soundId });
+                    playPreviewSound(soundId);
+                  }}
+                  className="flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-slate-900 dark:text-white text-xs cursor-pointer"
+                >
+                  {SYSTEM_SOUND_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name} — {opt.description}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => playPreviewSound(settings.depositSoundId || 'glass_clink')}
+                  className="px-3 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                  title="Play preview of selected system sound"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Preview</span>
+                </button>
+              </div>
             </div>
 
             <div>
@@ -472,44 +540,121 @@ export const SettingsModal: React.FC<{
             </div>
 
             <div className="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
-              <span>Current rate: {formatCurrency(settings.perCoinValue)} per mute coin</span>
+              <span>Current rate: {formatCurrency(settings.perCoinValue)} per Mutecoin</span>
               <span className="font-mono text-[10px] text-slate-400">Code: {settings.currencyCode}</span>
             </div>
           </div>
 
-          {/* Auto-Start Configuration (Enabled by Default) */}
+          {/* Auto-Start & Background Modes Configuration */}
           <div className="p-4 rounded-2xl bg-sky-50/50 dark:bg-sky-950/20 border border-sky-200/80 dark:border-sky-900/60 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Monitor className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
                 <span className="font-bold text-slate-900 dark:text-white text-xs">
-                  Auto-Start & Background Modes
+                  Background Modes &amp; System Tray
                 </span>
               </div>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                Default: Enabled
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                Monitor: Off by Default
               </span>
             </div>
 
-            {/* Toggle 1: Auto-start audio monitor */}
+            {/* Toggle 1: Auto-start audio monitor (Off by default) */}
             <label className="flex items-start justify-between gap-3 cursor-pointer select-none">
               <div className="space-y-0.5">
-                <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
-                  Auto-Start Voice Monitor on Launch
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
+                    Auto-Start Voice Monitor on Launch
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
+                    Off by default
+                  </span>
+                </div>
                 <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Automatically activates speech-on-mute detection as soon as app opens.
+                  Audio monitor stays strictly paused on launch and code updates. Click Start in the Audio Monitor bar whenever you want to begin tracking.
                 </p>
               </div>
               <input
                 type="checkbox"
-                checked={settings.autoStartMonitoring ?? true}
+                checked={settings.autoStartMonitoring ?? false}
                 onChange={(e) => updateSettings({ autoStartMonitoring: e.target.checked })}
                 className="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
               />
             </label>
 
-            {/* Toggle 2: OS autostart on restart */}
+            {/* Toggle 2: Minimize to Tray / Menu Bar */}
+            <label className="flex items-start justify-between gap-3 cursor-pointer select-none pt-2 border-t border-sky-100 dark:border-sky-900/40">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
+                    Minimise to Tray / Menu Bar
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold font-mono">
+                    Recommended
+                  </span>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  Closing or minimizing the window keeps Mute Jar running in your macOS menu bar or Windows system tray with a quick-access icon.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.minimizeToTray ?? true}
+                onChange={(e) => updateSettings({ minimizeToTray: e.target.checked })}
+                className="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
+              />
+            </label>
+
+            {/* Toggle 3: Pause Audio Monitor on OS Focus / Do Not Disturb */}
+            <div className="pt-2 border-t border-sky-100 dark:border-sky-900/40 space-y-2">
+              <label className="flex items-start justify-between gap-3 cursor-pointer select-none">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
+                      Pause Monitor in OS Focus / Do Not Disturb
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold font-mono">
+                      Enabled by default
+                    </span>
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                    Automatically pauses microphone audio monitoring and coin detection whenever macOS Focus, Windows Focus Assist, or Do Not Disturb is active.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.pauseOnDoNotDisturb ?? true}
+                  onChange={(e) => updateSettings({ pauseOnDoNotDisturb: e.target.checked })}
+                  className="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
+                />
+              </label>
+
+              {/* Live Status and Interactive OS Focus Test Button */}
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <Moon className={`w-3.5 h-3.5 ${audioState.isDoNotDisturbActive ? 'text-purple-500 animate-pulse' : 'text-slate-400'}`} />
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">
+                    Status: <strong className={audioState.isDoNotDisturbActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-500'}>
+                      {audioState.isDoNotDisturbActive ? 'Focus / DND Active (Monitor Paused)' : 'Normal Mode (Focus Inactive)'}
+                    </strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleDoNotDisturb()}
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                    audioState.isDoNotDisturbActive
+                      ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800'
+                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="Simulate OS Focus / Do Not Disturb Mode"
+                >
+                  {audioState.isDoNotDisturbActive ? 'End Focus Mode' : 'Simulate OS Focus'}
+                </button>
+              </div>
+            </div>
+
+            {/* Toggle 3: OS autostart on restart */}
             <label className="flex items-start justify-between gap-3 cursor-pointer select-none pt-2 border-t border-sky-100 dark:border-sky-900/40">
               <div className="space-y-0.5">
                 <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
@@ -536,7 +681,7 @@ export const SettingsModal: React.FC<{
                   }}
                   className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 hover:bg-sky-50 transition-colors shrink-0 cursor-pointer"
                 >
-                  View OS Distribution & Autostart Guide →
+                  View OS Distribution, Tray &amp; Autostart Guide →
                 </button>
               </div>
             )}
@@ -560,30 +705,30 @@ export const SettingsModal: React.FC<{
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                 <HardDrive className="w-4 h-4 text-amber-500" />
-                <span>Build Version &amp; Local Cache Lifecycle</span>
+                <span>Build Version &amp; Data Persistence</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
                 {getCurrentBuildId()}
               </span>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-              <strong className="text-slate-900 dark:text-white">Automated cache clearance active:</strong> Every time a new build is deployed or launched, all locally cached data (<code className="font-mono text-[10px] bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code>, session cache, and service worker caches) is automatically purged to guarantee a clean slate without stale states.
+              <strong className="text-slate-900 dark:text-white">Persistent user data active:</strong> Your settings, goals, mute events, and profile are saved locally in <code className="font-mono text-[10px] bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code> and remain permanently preserved across closing the app, restarting, or updating builds. User data is only purged when you explicitly choose to delete your profile below.
             </p>
             <div className="pt-1 flex items-center justify-between gap-3">
               <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                Need to start completely fresh right now?
+                Need to purge temporary asset caches?
               </span>
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm('Clear all locally cached data and reload the app?')) {
+                  if (window.confirm('Refresh asset caches and reload the app? (Your profile and mute history will be kept)')) {
                     purgeAllLocalCacheNow();
                   }
                 }}
                 className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Clear Cache Now</span>
+                <span>Refresh Cache</span>
               </button>
             </div>
           </div>

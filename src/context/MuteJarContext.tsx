@@ -41,6 +41,8 @@ interface MuteJarContextType {
     isVoiceCalibrating: boolean;
     voiceCalibrationProgress: number;
     detectedPitchHz: number | null;
+    isDoNotDisturbActive: boolean;
+    dndPausedAudio: boolean;
   };
   scheduledMeetings: ScheduledMeeting[];
   setScheduledMeetings: React.Dispatch<React.SetStateAction<ScheduledMeeting[]>>;
@@ -56,7 +58,9 @@ interface MuteJarContextType {
   addMuteCoin: (meetingTitle?: string, method?: 'auto_audio' | 'manual') => void;
   undoMuteCoin: (recordId?: string) => void;
   startListening: () => Promise<boolean>;
-  stopListening: () => void;
+  stopListening: (pausedByDND?: boolean) => void;
+  toggleDoNotDisturb: (forceState?: boolean) => void;
+  playPreviewSound: (soundId?: string) => void;
   calibrateRoomNoise: () => Promise<{ averageFloor: number; peakFloor: number }>;
   calibrateVoiceProfile: (durationMs?: number) => Promise<UserVoiceProfile>;
   clearVoiceProfile: () => void;
@@ -103,16 +107,19 @@ const DEFAULT_SETTINGS: UserSettings = {
     version: '1.0',
   },
   persona: 'pragmatist',
-  soundEnabled: true,
+  soundEnabled: false, // Default: OFF as requested. Deposit sound is off until explicitly enabled.
   soundVolume: 0.7,
+  depositSoundId: 'glass_clink', // Default system sound FX
   sensitivity: 6,
   filterRadioBackground: true,
   noiseFloorMargin: 15,
   calibratedNoiseFloor: 0,
   microphoneMode: 'near_field',
   autoDetectMeetingAudio: true,
-  autoStartMonitoring: true, // Enabled by default as requested
-  autoStartOnOSBoot: true,   // OS autostart enabled by default
+  autoStartMonitoring: false, // Disabled by default as requested: monitor is OFF on launch until explicitly started
+  autoStartOnOSBoot: true,   // OS autostart option
+  minimizeToTray: true,      // Minimize to system tray / menu bar status icon on window close
+  pauseOnDoNotDisturb: true, // Auto-pause audio monitor when OS focus or Do Not Disturb is active (default: true)
   reminderDay: 28,
   reminderHour: 16,
   country: detectedLocale.countryCode,
@@ -129,22 +136,22 @@ const DEFAULT_SETTINGS: UserSettings = {
   selectedCharityId: 'globalgiving',
   customCharityUrl: 'https://www.globalgiving.org',
   customCharityName: 'GlobalGiving Crisis & Community Fund',
-  saintTargetCoins: 20, // 20 MuteCoins donation payout threshold
+  saintTargetCoins: 20, // 20 Mutecoins donation payout threshold
 
   pragmatistGoalTitle: '50 Pushups & 100 Pages Read',
-  pragmatistGoalDescription: 'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.',
-  pragmatistTargetCoins: 25, // 25 MuteCoins goal milestone
+  pragmatistGoalDescription: 'Perform 5 pushups and read 10 book pages for every mutecoin dropped this month.',
+  pragmatistTargetCoins: 25, // 25 Mutecoins goal milestone
 
   roastActivityTitle: 'Friday Gourmet Donuts & Coffee for the Team',
   roastActivityDescription: 'Bring fresh artisanal pastries and barista coffees to the sprint team when threshold is reached.',
-  roastTargetCoins: 15, // 15 MuteCoins forfeit trigger
+  roastTargetCoins: 15, // 15 Mutecoins forfeit trigger
 
   philosophyLabelStyle: 'improved',
 
   cycleFrequency: 'monthly',
 
   activeTargetTitle: '50 Pushups & 100 Pages Read',
-  activeTargetDescription: 'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.',
+  activeTargetDescription: 'Perform 5 pushups and read 10 book pages for every mutecoin dropped this month.',
   theme: 'light',
 };
 
@@ -220,14 +227,29 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Clean stale autoStartMonitoring from previous builds if it was true
+        if (parsed.autoStartMonitoring === true) {
+          try {
+            localStorage.setItem(
+              STORAGE_KEYS.SETTINGS,
+              JSON.stringify({ ...parsed, autoStartMonitoring: false })
+            );
+          } catch {
+            // ignore
+          }
+        }
         return {
           ...DEFAULT_SETTINGS,
           ...parsed,
           userName: parsed.userName || '',
           userEmail: parsed.userEmail || '',
           userAvatar: parsed.userAvatar || DEFAULT_SETTINGS.userAvatar,
-          autoStartMonitoring: parsed.autoStartMonitoring !== undefined ? parsed.autoStartMonitoring : true,
+          autoStartMonitoring: false, // Strictly OFF by default. Requires explicit user action to start.
           autoStartOnOSBoot: parsed.autoStartOnOSBoot !== undefined ? parsed.autoStartOnOSBoot : true,
+          minimizeToTray: parsed.minimizeToTray !== undefined ? parsed.minimizeToTray : true,
+          pauseOnDoNotDisturb: parsed.pauseOnDoNotDisturb !== undefined ? parsed.pauseOnDoNotDisturb : true,
+          soundEnabled: parsed.soundDefaultMigrated ? (parsed.soundEnabled ?? false) : false, // Off by default as requested
+          depositSoundId: parsed.depositSoundId || 'glass_clink',
           currencyCode: parsed.currencyCode || DEFAULT_SETTINGS.currencyCode,
           currency: parsed.currency || DEFAULT_SETTINGS.currency,
           country: parsed.country || DEFAULT_SETTINGS.country,
@@ -302,11 +324,23 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isVoiceCalibrating: false,
     voiceCalibrationProgress: 0,
     detectedPitchHz: null as number | null,
+    isDoNotDisturbActive: (() => {
+      try {
+        return localStorage.getItem('mutejar_os_dnd_active') === 'true';
+      } catch {
+        return false;
+      }
+    })(),
+    dndPausedAudio: false,
   });
 
-  // Keep AudioEngine synced with settings including background filter and voice profile
+  // Keep AudioEngine synced with settings including background filter, voice profile, and sound FX
   useEffect(() => {
-    audioEngine.setSoundSettings(settings.soundEnabled, settings.soundVolume);
+    audioEngine.setSoundSettings(
+      settings.soundEnabled,
+      settings.soundVolume,
+      settings.depositSoundId || 'glass_clink'
+    );
     audioEngine.setSensitivity(settings.sensitivity);
     audioEngine.setFilterSettings(
       settings.filterRadioBackground !== false,
@@ -322,6 +356,7 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [
     settings.soundEnabled,
     settings.soundVolume,
+    settings.depositSoundId,
     settings.sensitivity,
     settings.filterRadioBackground,
     settings.noiseFloorMargin,
@@ -405,8 +440,8 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setMutes((prev) => [newRecord, ...prev]);
 
-      // Play synthesized cartoon coin sound
-      audioEngine.playCoinSound();
+      // Play synthesized Mutecoin deposit sound (if enabled)
+      audioEngine.playCoinSound(settings.depositSoundId || 'glass_clink');
 
       // Start 5-second Grace Window for automatic "Undo if unmuted"
       setActiveGraceRecord(newRecord);
@@ -488,13 +523,15 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAudioState((prev) => ({
       ...prev,
       isListening: success,
+      dndPausedAudio: false,
     }));
     return success;
   };
 
-  const stopListening = () => {
+  const stopListening = (pausedByDND: boolean = false) => {
     audioEngine.stopAll();
-    setAudioState({
+    setAudioState((prev) => ({
+      ...prev,
       isListening: false,
       micLevel: 0,
       threshold: 28,
@@ -508,6 +545,35 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       isVoiceCalibrating: false,
       voiceCalibrationProgress: 0,
       detectedPitchHz: null,
+      dndPausedAudio: pausedByDND,
+    }));
+  };
+
+  const toggleDoNotDisturb = (forceState?: boolean) => {
+    setAudioState((prev) => {
+      const nextActive = forceState !== undefined ? forceState : !prev.isDoNotDisturbActive;
+      try {
+        localStorage.setItem('mutejar_os_dnd_active', nextActive ? 'true' : 'false');
+      } catch {
+        // ignore
+      }
+
+      // If DND is turning ON and pauseOnDoNotDisturb is enabled, halt active monitoring
+      if (nextActive && settings.pauseOnDoNotDisturb !== false && prev.isListening) {
+        audioEngine.stopAll();
+        return {
+          ...prev,
+          isListening: false,
+          isDoNotDisturbActive: nextActive,
+          dndPausedAudio: true,
+        };
+      }
+
+      return {
+        ...prev,
+        isDoNotDisturbActive: nextActive,
+        dndPausedAudio: nextActive ? prev.dndPausedAudio : false,
+      };
     });
   };
 
@@ -579,34 +645,64 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Auto-start monitoring by default once user has consented or completed onboarding
+  // Ensure that on unmount / hot-reload, any active microphone stream is cleanly halted
   useEffect(() => {
-    let cancelled = false;
-    const shouldAutoStart =
-      settings.autoStartMonitoring &&
-      settings.privacyConsent?.hasConsented &&
-      !audioState.isListening;
+    return () => {
+      audioEngine.stopAll();
+    };
+  }, []);
 
-    if (shouldAutoStart) {
-      const timer = setTimeout(async () => {
-        if (!cancelled && !audioState.isListening) {
-          try {
-            const success = await audioEngine.startMicrophone();
-            if (!cancelled && success) {
-              setAudioState((prev) => ({ ...prev, isListening: true }));
-            }
-          } catch (e) {
-            console.info('Auto-start audio monitor will resume upon user gesture:', e);
-          }
-        }
-      }, 600);
+  // Synchronize OS Focus / Do Not Disturb state from storage or native companion events
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'mutejar_os_dnd_active') {
+        const active = e.newValue === 'true';
+        setAudioState((prev) => ({
+          ...prev,
+          isDoNotDisturbActive: active,
+          dndPausedAudio: active && settings.pauseOnDoNotDisturb !== false && prev.isListening ? true : prev.dndPausedAudio,
+        }));
+      }
+    };
 
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
+    const handleCustomFocus = (e: Event) => {
+      const customEvt = e as CustomEvent<{ active?: boolean }>;
+      const active = customEvt.detail?.active ?? true;
+      setAudioState((prev) => ({
+        ...prev,
+        isDoNotDisturbActive: active,
+        dndPausedAudio: active && settings.pauseOnDoNotDisturb !== false && prev.isListening ? true : prev.dndPausedAudio,
+      }));
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('mutejar-os-focus-change', handleCustomFocus);
+
+    // Global helper for native app wrappers / shortcuts / console testing
+    (window as unknown as { __MUTEJAR_SET_DND__?: (active: boolean) => void }).__MUTEJAR_SET_DND__ = (active: boolean) => {
+      toggleDoNotDisturb(active);
+    };
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('mutejar-os-focus-change', handleCustomFocus);
+      delete (window as unknown as { __MUTEJAR_SET_DND__?: unknown }).__MUTEJAR_SET_DND__;
+    };
+  }, [settings.pauseOnDoNotDisturb]);
+
+  // When OS Focus / DND becomes active, pause the audio monitor if pauseOnDoNotDisturb is enabled
+  useEffect(() => {
+    if (audioState.isDoNotDisturbActive && settings.pauseOnDoNotDisturb !== false) {
+      if (audioState.isListening) {
+        audioEngine.stopAll();
+        setAudioState((prev) => ({
+          ...prev,
+          isListening: false,
+          dndPausedAudio: true,
+        }));
+      }
     }
-  }, [settings.autoStartMonitoring, settings.privacyConsent?.hasConsented]);
+  }, [audioState.isDoNotDisturbActive, settings.pauseOnDoNotDisturb, audioState.isListening]);
 
   const updateSettings = (updates: Partial<UserSettings>) => {
     setSettings((prev) => {
@@ -834,6 +930,8 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         undoMuteCoin,
         startListening,
         stopListening,
+        toggleDoNotDisturb,
+        playPreviewSound: (soundId?: string) => audioEngine.playPreviewSound(soundId || settings.depositSoundId || 'glass_clink'),
         calibrateRoomNoise,
         calibrateVoiceProfile,
         clearVoiceProfile,
