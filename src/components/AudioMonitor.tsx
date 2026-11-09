@@ -49,7 +49,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
   } = useMuteJar();
 
   const [showControls, setShowControls] = useState(true);
-  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(true);
   const [showExplanation, setShowExplanation] = useState(false);
   const [micPermissionError, setMicPermissionError] = useState(false);
   const [calibrationSuccessMessage, setCalibrationSuccessMessage] = useState<string | null>(null);

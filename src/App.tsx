@@ -102,7 +102,7 @@ const MainAppContent: React.FC = () => {
                 aria-label="Privacy guarantee: local audio monitoring only"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>Local VAD Only</span>
+                <span>On-Device Only</span>
               </button>
 
               {isPrivacyPopoverOpen && (
