@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMuteJar } from '../context/MuteJarContext';
 import { PersonaType } from '../types';
+import { MuteJarLogo } from './MuteJarLogo';
 import {
   Shield,
   CheckCircle2,
@@ -120,9 +121,7 @@ export const OnboardingModal: React.FC = () => {
         {/* Step Indicator Header */}
         <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl coin-shimmer flex items-center justify-center border border-amber-300 shadow-xs">
-              <MicOff className="w-4 h-4 text-amber-950" />
-            </div>
+            <MuteJarLogo className="w-8 h-8" />
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Welcome to Mute Jar

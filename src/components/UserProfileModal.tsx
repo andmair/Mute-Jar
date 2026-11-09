@@ -228,7 +228,7 @@ export const UserProfileModal: React.FC<{
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-700 dark:text-slate-200">
             <span className="flex items-center gap-1.5 font-medium">
               <Award className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
-              <span>Lifetime Mute Coins:</span>
+              <span>Lifetime Mutecoins:</span>
             </span>
             <span className="font-mono font-bold text-slate-900 dark:text-white">
               {totalAllTimeMutes} coins

@@ -30,6 +30,7 @@ import {
 import { POPULAR_CURRENCIES, detectLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
 import { getCurrentBuildId, purgeAllLocalCacheNow } from '../utils/buildCacheManager';
 import { SYSTEM_SOUND_OPTIONS } from '../utils/audioEngine';
+import { MuteJarLogo } from './MuteJarLogo';
 
 export const SettingsModal: React.FC<{
   isOpen: boolean;
@@ -97,9 +98,7 @@ export const SettingsModal: React.FC<{
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
-              <Settings className="w-4 h-4" />
-            </div>
+            <MuteJarLogo className="w-8 h-8" />
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Mute Jar Settings

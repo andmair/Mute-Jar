@@ -422,7 +422,7 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return matching ? matching.title : 'Live Meeting Call';
   }, [settings.activeMeetingTitle, scheduledMeetings]);
 
-  // Add Mute Coin handler
+  // Add Mutecoin handler
   const addMuteCoin = useCallback(
     (customTitle?: string, method: 'auto_audio' | 'manual' = 'auto_audio') => {
       const monthKey = getCurrentMonthKey();
@@ -467,7 +467,7 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [resolveCurrentMeetingTitle]
   );
 
-  // Undo Last Mute Coin handler
+  // Undo Last Mutecoin handler
   const undoMuteCoin = useCallback(
     (recordId?: string) => {
       const targetId = recordId || (activeGraceRecord ? activeGraceRecord.id : null);
@@ -485,6 +485,30 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     },
     [activeGraceRecord]
   );
+
+  // Global Cmd+Z / Ctrl+Z keyboard shortcut for instant undo during grace period
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
+        if (activeGraceRecord) {
+          e.preventDefault();
+          undoMuteCoin();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeGraceRecord, undoMuteCoin]);
 
   // Setup audio callbacks
   useEffect(() => {

@@ -60,14 +60,14 @@ export default defineConfig(() => {
             {
               name: 'Open Mute Jar',
               short_name: 'Jar',
-              description: 'View current month mute coin fill',
+              description: 'View current month Mutecoin fill',
               url: '/#jar-view',
               icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
             },
             {
               name: 'Monthly Review',
               short_name: 'Review',
-              description: 'Redeem monthly mute coins for charity or pledges',
+              description: 'Redeem monthly Mutecoins for charity or pledges',
               url: '/#actions-view',
               icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
             },

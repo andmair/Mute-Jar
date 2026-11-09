@@ -13,6 +13,7 @@ import {
   Lock,
   ShieldCheck,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 
 export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
@@ -35,6 +36,7 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>(currentMonthKey);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Filter mutes for ledger
   const currentMonthMutes = mutes.filter((m) => {
@@ -44,6 +46,8 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
       new Date(m.timestamp).toLocaleDateString().includes(searchTerm);
     return matchesMonth && matchesSearch;
   });
+
+  const displayedMutes = isExpanded ? currentMonthMutes : currentMonthMutes.slice(0, 3);
 
   // Unique months available in history
   const availableMonths = Array.from(new Set(mutes.map((m) => m.monthKey))).sort(
@@ -236,7 +240,7 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {currentMonthMutes.slice(0, 10).map((record) => {
+                {displayedMutes.map((record) => {
                   const dateStr = new Date(record.timestamp).toLocaleDateString([], {
                     month: 'short',
                     day: 'numeric',
@@ -308,6 +312,23 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
                 })}
               </tbody>
             </table>
+
+            {/* Collapsible Disclosure Toggle */}
+            {currentMonthMutes.length > 3 && (
+              <div className="pt-3 px-1 mt-1 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  Showing {displayedMutes.length} of {currentMonthMutes.length} events
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer flex items-center gap-1 text-xs"
+                >
+                  <span>{isExpanded ? 'Show Top 3 Only' : `Show All ${currentMonthMutes.length} Events`}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

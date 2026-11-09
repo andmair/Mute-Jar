@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Minimize2,
 } from 'lucide-react';
+import { MuteJarLogo } from './MuteJarLogo';
 
 export const DesktopBackgroundGuideModal: React.FC<{
   isOpen: boolean;
@@ -31,9 +32,7 @@ export const DesktopBackgroundGuideModal: React.FC<{
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <Monitor className="w-4 h-4" />
-            </div>
+            <MuteJarLogo className="w-8 h-8" />
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Installation &amp; Desktop Packaging Guide
@@ -83,6 +82,56 @@ export const DesktopBackgroundGuideModal: React.FC<{
                 <span>Installed</span>
               </span>
             )}
+          </div>
+
+          {/* Official Brand Icon Consistency Banner */}
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                <MuteJarLogo className="w-4 h-4" />
+                <span>Mute Jar Official Icon: Round Pause Button with Red Stripes</span>
+              </span>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60">
+                Consistent App-Wide
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              The round pause button with red stripes is the standardized identity for Mute Jar across menu bars, taskbars, dock, and app shortcuts:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {/* Menu Bar Tray Preview */}
+              <div className="p-2.5 rounded-xl bg-slate-900 text-white border border-slate-700/80 space-y-1.5">
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold flex items-center justify-between">
+                  <span>macOS / OS Menu Bar Tray</span>
+                  <span className="text-slate-500 font-mono">10:42 AM</span>
+                </div>
+                <div className="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <MuteJarLogo className="w-4 h-4" />
+                    <span className="text-[11px] font-bold text-slate-200">Mute Jar</span>
+                  </div>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                    Menu Bar Ready
+                  </span>
+                </div>
+              </div>
+
+              {/* App Shortcut Preview */}
+              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 space-y-1.5">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                  Desktop &amp; Dock Shortcut
+                </div>
+                <div className="flex items-center gap-2.5 bg-white dark:bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <MuteJarLogo className="w-5 h-5" />
+                  <div>
+                    <div className="text-[11px] font-bold">Mute Jar</div>
+                    <div className="text-[9px] text-slate-400">Application · Standalone / PWA</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* OS & Packaging Tabs */}

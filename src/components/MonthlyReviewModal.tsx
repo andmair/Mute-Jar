@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { MuteJarLogo } from './MuteJarLogo';
 
 interface SuggestionItem {
   title: string;
@@ -78,7 +79,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
   );
   const [goalDesc, setGoalDesc] = useState(
     settings.pragmatistGoalDescription ||
-      `Perform 5 pushups for every mute coin (${currentCycleCoins * 5} total) over this cycle.`
+      `Perform 5 pushups for every Mutecoin (${currentCycleCoins * 5} total) over this cycle.`
   );
   const [workTitle, setWorkTitle] = useState(
     settings.roastActivityTitle || 'Team Coffee & Pastries Shout'
@@ -273,7 +274,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
     if (settings.persona === 'saint') {
       const charity = resolveCharityDetails();
       title = `Charity Donation: ${charity.name}`;
-      description = `Donated ${totalValuation} (${currentCycleCoins} mute coins) to ${charity.name}`;
+      description = `Donated ${totalValuation} (${currentCycleCoins} Mutecoins) to ${charity.name}`;
       donationUrl = charity.url;
 
       commitPledge({
@@ -358,15 +359,13 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
         {/* Header with Dynamic Cycle Label */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <Sparkles className="w-4 h-4" />
-            </div>
+            <MuteJarLogo className="w-8 h-8" />
             <div>
               <h2 id="review-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Mute Jar Review · {currentCycle.label}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Redeem your {currentCycleCoins} accumulated mute coins for this {cycleNoun.toLowerCase()}
+                Redeem your {currentCycleCoins} accumulated Mutecoins for this {cycleNoun.toLowerCase()}
               </p>
             </div>
           </div>
@@ -590,7 +589,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
                   <div className="p-4 rounded-2xl bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <span className="text-xs font-bold text-sky-950 dark:text-sky-200 block">
-                        Ready to Cash In {currentCycleCoins} Mute Coins?
+                        Ready to Cash In {currentCycleCoins} Mutecoins?
                       </span>
                       <p className="text-[11px] text-sky-800 dark:text-sky-300">
                         Total donation commitment: <strong>{totalValuation}</strong>. Clicking below opens the charity payment page in a new tab so you can make your donation.
@@ -735,7 +734,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
               <div>
                 <label htmlFor="pragmatist-goal-desc" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Goal Action Description ({currentCycleCoins} Mute Coins Commitment)
+                  Goal Action Description ({currentCycleCoins} Mutecoins Commitment)
                 </label>
                 <textarea
                   id="pragmatist-goal-desc"
@@ -833,7 +832,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
               <div>
                 <label htmlFor="roast-work-desc" className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Team Forfeit Action Description ({currentCycleCoins} Mute Coins)
+                  Team Forfeit Action Description ({currentCycleCoins} Mutecoins)
                 </label>
                 <textarea
                   id="roast-work-desc"

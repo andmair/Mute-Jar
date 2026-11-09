@@ -92,14 +92,14 @@ export const PhilosophyTargetCard: React.FC<PhilosophyTargetCardProps> = ({
             </p>
           </div>
 
-          {/* Target Threshold in MuteCoins & Currency */}
+          {/* Target Threshold in Mutecoins & Currency */}
           <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <Target className="w-3.5 h-3.5 text-sky-500" />
               <span>Donation Threshold:</span>
             </span>
             <span className="font-bold text-slate-900 dark:text-white font-mono">
-              {targetCoins} MuteCoins <span className="text-slate-400 font-normal">({targetDonationValue})</span>
+              {targetCoins} Mutecoins <span className="text-slate-400 font-normal">({targetDonationValue})</span>
             </span>
           </div>
 
@@ -162,7 +162,7 @@ export const PhilosophyTargetCard: React.FC<PhilosophyTargetCardProps> = ({
     const isTargetMet = currentMonthCoins >= targetCoins;
     const progressPercent = Math.min(100, Math.round((currentMonthCoins / targetCoins) * 100));
     const goalTitle = settings.pragmatistGoalTitle || '50 Pushups & 100 Pages Read';
-    const goalDesc = settings.pragmatistGoalDescription || 'Convert each mute coin into personal growth, fitness, and daily reading habits.';
+    const goalDesc = settings.pragmatistGoalDescription || 'Convert each Mutecoin into personal growth, fitness, and daily reading habits.';
 
     return (
       <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-800/80 shadow-xs flex-1 flex flex-col justify-between transition-all">
@@ -195,14 +195,14 @@ export const PhilosophyTargetCard: React.FC<PhilosophyTargetCardProps> = ({
             </p>
           </div>
 
-          {/* Target Threshold in MuteCoins (NOT currency) */}
+          {/* Target Threshold in Mutecoins (NOT currency) */}
           <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <Target className="w-3.5 h-3.5 text-amber-500" />
               <span>Milestone Target:</span>
             </span>
             <span className="font-bold text-slate-900 dark:text-white font-mono">
-              {targetCoins} MuteCoins <span className="text-amber-600 dark:text-amber-400 text-[11px] font-semibold">(slip-up accountability)</span>
+              {targetCoins} Mutecoins <span className="text-amber-600 dark:text-amber-400 text-[11px] font-semibold">(slip-up accountability)</span>
             </span>
           </div>
 
@@ -297,14 +297,14 @@ export const PhilosophyTargetCard: React.FC<PhilosophyTargetCardProps> = ({
           </p>
         </div>
 
-        {/* Target Threshold in MuteCoins (NOT currency) */}
+        {/* Target Threshold in Mutecoins (NOT currency) */}
         <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
           <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Crown className="w-3.5 h-3.5 text-rose-500" />
             <span>Forfeit Trigger Target:</span>
           </span>
           <span className="font-bold text-slate-900 dark:text-white font-mono">
-            {targetCoins} MuteCoins <span className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold">(team forfeit trigger)</span>
+            {targetCoins} Mutecoins <span className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold">(team forfeit trigger)</span>
           </span>
         </div>
 

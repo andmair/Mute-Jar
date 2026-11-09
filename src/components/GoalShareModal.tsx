@@ -36,7 +36,7 @@ export const GoalShareModal: React.FC<GoalShareModalProps> = ({
   if (!isOpen || !goal) return null;
 
   const appUrl = window.location.origin || 'https://mutejar.app';
-  const shareText = `🎙️ I just completed my goal "${goal.title}" by turning ${goal.coinsCommitted} MuteCoins (${goal.estimatedValue}) from on-mute meeting slip-ups into real-world follow-through on Mute Jar! ✨`;
+  const shareText = `🎙️ I just completed my goal "${goal.title}" by turning ${goal.coinsCommitted} Mutecoins (${goal.estimatedValue}) from on-mute meeting slip-ups into real-world follow-through on Mute Jar! ✨`;
 
   const handleCopyText = async () => {
     try {
@@ -207,7 +207,7 @@ export const GoalShareModal: React.FC<GoalShareModalProps> = ({
             {/* Metrics footer */}
             <div className="pt-2 border-t border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
               <span className="font-mono text-amber-800 dark:text-amber-300 font-bold">
-                {goal.coinsCommitted} MuteCoins Redeemed ({goal.estimatedValue})
+                {goal.coinsCommitted} Mutecoins Redeemed ({goal.estimatedValue})
               </span>
               <span className="text-slate-500 dark:text-slate-400">
                 {goal.actionedAt

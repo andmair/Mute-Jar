@@ -1,186 +1,129 @@
-# Mute Jar — Automated Meeting Mute-Speaking Tally & Monthly Pledge Jar
+# Mute Jar — UX Review & Ergonomic Improvement Recommendations
 
-A lightweight, privacy-first meeting companion that automatically detects whenever you speak while muted in a meeting using dual-channel device audio monitoring, deposits cartoonish animated "MuteCoins" into a customizable glass jar with sound effects, and turns meeting slip-ups into positive monthly charity donations, team pledges, and personal goals tailored to your chosen **"Mute Philosophy" persona**.
+A comprehensive, privacy-preserving UX review of **Mute Jar** with strategic recommendations to maximize clarity, intuitiveness, and ease of use during live meetings, while maintaining strict zero-recording privacy, high-contrast accessibility (WCAG 2.1 AA), and robust desktop performance.
+
+---
+
+## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> **User Review & Confirmed Decisions (Revised)**
-> - **Charity Aggregators & Custom URL Option**:
->   - *Global Priorities First*:
->     1. **GlobalGiving** (`globalgiving.org`): Vetted grassroots projects across 175+ countries.
->     2. **Every.org** (`every.org`): Tech-forward giving platform supporting 1M+ non-profits with 0% platform fees.
->     3. **PayPal Giving Fund** (`paypal.com/givingfund`): Trusted global platform with 100% donation pass-through.
->   - *Regional Leaders*:
->     4. **JustGiving** (`justgiving.com`): UK & European leader with automated Gift Aid.
->     5. **GiveNow** (`givenow.com.au`): Australia's premier DGR community giving platform.
->     6. **CanadaHelps** (`canadahelps.org`): Canada's leading charity aggregator.
->     7. **Benevity** (`benevity.com`): Global corporate matching & workplace giving.
->   - *Custom Charity of Choice*: Dedicated URL input where the user can enter their own charity's direct donation link with automated title and domain preview.
-> - **Pledge & Goal Action Tracker**:
->   - Interactive accountability tracker for work and personal pledges:
->     - **Status Pipeline**: `Pending Action` ➔ `In Progress` ➔ `Actioned / Completed`.
->     - **When & How**: Logs exact action date/timestamp, action notes/reflection (e.g. *"Took design team out for coffee & sprint retro"* or *"Did 45 pushups across 3 workouts"*), and optional completion link/photo note.
->     - **Accountability Ledger**: Visual archive of past months' completed pledges with streak tracker.
-> - **Privacy Statement & Tickbox Consent (Mandatory Onboarding Step)**: An explicit, transparent privacy pledge with a required confirmation tickbox before audio monitoring can be activated (Local Storage Only, In-Memory Voice Energy Analysis, Zero Recording / Zero Transcription).
-> - **Onboarding "Mute Philosophy" (3 Curated Personas)**: "The Saint" (Charity & Giving), "The Pragmatist" (Growth & Productivity), "The Roast Master" (Humor & Team Fun).
-> - **Zero Hotkeys / 100% Automated Audio Detection**: Runs automatically via microphone Voice Activity Detection (VAD) coupled with meeting audio monitoring.
-> - **Frictionless "Oops, I was unmuted" Grace Period**: 5-second automatic undo toast on every detected mute coin drop.
-> - **Visual Aesthetic**: Playful, cartoonish glass jar with rich visual depth, wobbling physics-inspired coin drops, persona emblem sticker on the glass, and synthesized chime sound effects (with instant toggle/volume control).
+> **Confirmed User Priorities from Interactive Clarification**:
+> - **Primary UX Focus**: **Real-Time Meeting HUD & Live Unmute Feedback** — Optimizing glanceability, speech threshold calibration, and instantaneous grace-period controls during active calls.
+> - **Main Screen Density**: **Balanced Side-by-Side View** — Maintaining an ergonomic 50/50 dual-column layout on desktop where the interactive cartoon jar and analytics/pledge targets sit comfortably together without vertical scrolling.
+> - **Privacy Presentation**: **Discrete Visual Shield Badge with Subtle Live Status** — Elevating user confidence with clean, unobtrusive privacy badges that explain local-only in-memory processing without intrusive banner clutter.
+> - **Scope Guard**: **Recommendations Only (No Code Changes Yet)** — This document establishes the design blueprints and prioritization matrix for user feedback and approval prior to code implementation.
 
 ---
 
-## 1. Overview & Core Concept
+## 1. Executive Summary & Core UX Principles
 
-- **What It Does**: Operates fully automatically in the background without requiring local administrative software installation or meeting bot invites. It uses browser audio APIs to monitor microphone and speaker activity. When it detects speech from the user during an active meeting, it logs a "mute incident", plays a satisfying coin clink, and animates a cartoon MuteCoin falling into the glass jar.
-- **Privacy & Safety Guarantees**: A strict privacy-first architecture with upfront informed consent. Zero audio eavesdropping, zero cloud audio transit, and zero transcription. All data remains inside the user's browser sandbox.
-- **Target Audience / Persona**: Remote and hybrid professionals across Zoom, Google Meet, Microsoft Teams, Webex, and Slack who want a fun, effortless way to track and curb speaking while muted.
-- **Key Value**: Hands-free operation, strict client-side privacy, direct integration with top global and regional charities (plus custom charity URLs), and full accountability tracking for personal habits and team pledges.
+Mute Jar serves users in a high-distraction, high-cognitive-load environment: **active video meetings** (Google Meet, Zoom, Microsoft Teams, Slack Huddles, Webex). The application must be:
 
----
-
-## 2. User Experience & Visual Design
-
-### Key User Flows
-1. **Onboarding: Privacy Consent & Mute Philosophy Setup**:
-   - **Step 1: Privacy Pledge & Consent Modal**:
-     - Visual badge: 🔒 *Zero-Audio-Recording Guarantee*.
-     - Explicit disclosure: Local Storage Only; In-Memory Voice Energy; Not a Transcription Tool.
-     - **Mandatory Tickbox**: *"I understand that Mute Jar does not record or transcribe audio, and I consent to local in-memory voice activity monitoring."*
-   - **Step 2: Choose Your "Mute Philosophy"**:
-     - 🕊️ **The Saint**: Charity & global impact focus.
-     - ⚡ **The Pragmatist**: Habit formation & personal goals.
-     - 👑 **The Roast Master**: Humor, team roasts & workplace pledges.
-2. **Automated Meeting Detection & Live Mute Event**:
-   - One-click monitor start (browser mic + meeting audio stream).
-   - Dynamic coin drop animation into the cartoon glass jar upon voice activity during meetings.
-   - Gentle toast notification: *"Mute coin added! (5s Undo if you were unmuted)"*.
-   - Automatic meeting context tagging from Google Calendar or local schedule.
-3. **Dashboard & Analytics**:
-   - **Playful Cartoon Jar View**: Animated glass jar with bouncing coins, cork lid, persona sticker, and live coin counter.
-   - **Comparative Metrics**: Current Month vs. Last Month and 12-Month Rolling Average.
-   - **Meeting History Ledger**: Timestamps, meeting titles, and coin counts with 1-click manual adjustment.
-   - **Active Pledge Tracker Card**: Displays the current active pledge or goal with progress badge and "Log Action" button.
-4. **End-of-Month Review & Pledge Ceremony**:
-   - Scheduled reminder banner when month ends.
-   - **3 Redemption Paths**:
-     - **Path A: Charity Donation**:
-       - Value per coin selector (e.g. $1.00 or custom currency/amount).
-       - Curated aggregator picker:
-         - 🌐 **GlobalGiving** (Grassroots projects in 175+ countries)
-         - 🌐 **Every.org** (1M+ charities, 0% platform fee)
-         - 🌐 **PayPal Giving Fund** (100% donation pass-through)
-         - 🇬🇧 **JustGiving** (UK & Global, Gift Aid eligible)
-         - 🇦🇺 **GiveNow** (Australia's DGR charity platform)
-         - 🇨🇦 **CanadaHelps** (Canadian registered charities)
-         - 💼 **Benevity** (Workplace corporate matching)
-         - 🔗 **Custom Charity URL**: Direct link input with auto-preview.
-       - "Open Donation Link" button that records donation proof.
-     - **Path B: Personal Goals**:
-       - Multiplier setting (e.g. 5 pushups / 10 book pages per coin).
-       - Gemini AI generator for motivating goal suggestions.
-     - **Path C: Work Pledges**:
-       - Team commitment (coffee shout, demo lightning talk, team snacks).
-       - Gemini AI generator tailored to Roast Master / humor.
-5. **Pledge & Goal Action Tracking**:
-   - When a pledge or goal is committed, it enters the **Action Log**:
-     - Mark as **"Actioned / Done"**
-     - Record **When** (completion date picker) and **How** (action notes describing what you did)
-     - Completion celebration animation and monthly badge awarded.
-
-### Visual Identity & Theme
-- **Aesthetic Direction**: Playful, cartoonish glass jar with vibrant colors, rounded contours, and clean contemporary interface framing (inspired by high-end casual game art and modern productivity tools).
-- **Color Palette**:
-  - Dominant Neutral Canvas: Crisp slate/paper white in light mode (`#F8FAFC`), deep midnight slate in dark mode (`#0F172A`).
-  - Jar Glass: Translucent aqua/cyan glass sheen with glossy cartoon specular highlights (`#38BDF8`).
-  - Coins: Radiant golden yellow (`#FBBF24`, `#F59E0B`) with embossed mute mic symbol.
-  - Persona Badges: Sky Blue for The Saint, Vibrant Amber for The Pragmatist, Warm Coral/Purple for The Roast Master.
-- **Typography & Hierarchy**:
-  - Display Font: `Plus Jakarta Sans` for punchy, friendly titles.
-  - Body Font: `DM Sans` for clean, readable interface copy.
-  - Data Figures: Monospace tabular numerals (`font-mono tabular-nums`) for exact coin counts and timestamps.
-- **Interactive Feedback & Motion**:
-  - Physics-settling bounce animations using `motion` and canvas coin stacks.
-  - Live audio waveform visualizer allowing visual confirmation of voice input without saving any recordings.
+1. **Glanceable in Peripheral Vision**: Users look at their slides or colleagues, not at Mute Jar. Visual feedback must be discernible in $<200\text{ms}$ through peripheral color, motion, or audio cues without demanding direct eye focus.
+2. **Frictionless & Forgiving**: Speaking on mute is an embarrassing slip-up, but false positives (coughing, laughing, typing, or speaking when actually unmuted) must be undoable with zero frantic mouse hunting.
+3. **Calm & Non-Intrusive**: No nagging alerts, no flashing high-contrast banners, and no unsolicited sound effects while colleagues are speaking.
+4. **Transparent Local Privacy**: Clear, reassuring visual proof that microphone audio is processed strictly in client-side RAM (Voice Activity Detection energy analysis) with zero audio recordings, zero cloud uploads, and zero transcription.
+5. **Universal Accessibility (WCAG 2.1 AA)**: Observable states must never rely on color alone (combining shape, text, and icons), focus rings must be visible (`focus-visible:ring-2`), and screen-reader announcements (`aria-live="polite"`) must convey coin drops and undo windows.
 
 ---
 
-## 3. Key Product Decisions & Trade-Offs
+## 2. Detailed UX Recommendations by Area
 
-- **Decision 1: Curated Aggregators with Global Priority & Custom URL**:
-  - *Chosen Approach*: Highlight top-tier global platforms (GlobalGiving, Every.org, PayPal Giving Fund) followed by regional leaders (JustGiving, GiveNow, CanadaHelps, Benevity) plus a custom URL field.
-  - *Why*: Accommodates users worldwide without restricting them to a single country or payment processor, while allowing exact local charities via custom URL.
-- **Decision 2: Action Tracking with Verification Notes**:
-  - *Chosen Approach*: Structured tracking of "When" (timestamp) and "How" (action notes) with a status pipeline (`Pending` ➔ `In Progress` ➔ `Completed`).
-  - *Why*: Turns pledges from empty promises into real accountability and fun personal milestones.
-- **Decision 3: Transparent Privacy Architecture with Mandatory Consent**:
-  - *Chosen Approach*: Explicit onboarding privacy disclosure with a mandatory acknowledgment checkbox before enabling audio listeners.
-- **Decision 4: Elimination of Hotkeys in Favor of Fully Automated Detection**:
-  - *Chosen Approach*: Automatic dual-stream analysis (Mic VAD + Meeting audio stream) with calendar auto-sessioning and a 5-second "Undo if unmuted" grace toast.
-- **Decision 5: Server-Side Gemini AI Pledge Suggestion Engine**:
-  - *Chosen Approach*: Secure server endpoint (`/api/pledges/suggest`) calling `gemini-3.8-flash` with persona context.
+### Area 1: Real-Time Meeting HUD & Live Unmute Feedback (Priority Focus)
+
+| # | Friction / Current State | Recommended Improvement | UX & Ergonomic Rationale |
+| :--- | :--- | :--- | :--- |
+| **1.1** | **Ambiguous Audio Meter**: The live volume bar moves with all room sound, making users wonder if their room noise is triggering coins. | **Dual-Zone Energy Meter with Clear Speech Gate**: Render an ambient room floor bracket alongside the active speech trigger threshold line. Label it clearly: `Room Noise (Green)` vs `Voice Trigger Threshold (Amber/Red)`. | Gives users immediate visual confidence that keyboard clatter, breathing, or fan hum is successfully filtered below the threshold. |
+| **1.2** | **Frantic Mouse Hunting on False Positives**: Undoing an accidental coin drop requires spotting and clicking the 5s toast button in the corner. | **Global Keyboard Shortcut (`Cmd+Z` / `Ctrl+Z` / Spacebar)** + **Dedicated HUD Undo Pill**: Allow an immediate single-key undo while the app is active, paired with a prominent, high-contrast undo pill right on the HUD. | In a live meeting, finding a tiny toast with a mouse cursor takes 3–4 seconds. A keyboard shortcut or prominent HUD button reduces reaction time to $<0.5\text{s}$. |
+| **1.3** | **HUD Status Density**: Monitoring status, calibration, and mic selector are spread across multiple rows. | **Compact Segmented HUD Bar**: Unify into a single high-efficiency strip: `[Brand Logo] [Status Pill: Active / Paused] [Mic Selector Dropdown] [Ambient Sensitivity Slider] [Test Drop Button]`. | Frees up vertical real estate and ensures all audio controls are consolidated in one logical grouping. |
+| **1.4** | **Subtle Peripheral Edge Glow (Opt-In)**: Users in full-screen slide presentations miss coin drops entirely. | **Quiet Edge Pulse**: A gentle, subtle 1-second amber border pulse around the app window when a Mutecoin is dropped, providing peripheral awareness without audio distraction. | Solves the problem of missing silent mute notifications while preserving the user's focus on meeting slides. |
 
 ---
 
-## 4. Technical Architecture & Data Strategy
+### Area 2: Main Screen Layout — Balanced Side-by-Side Ergonomics
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          Automated Mute Jar System                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-        ┌──────────────────────────────┴──────────────────────────────┐
-        ▼                                                             ▼
-┌─────────────────────────────────────────┐               ┌─────────────────────────────────────────┐
-│     Automated Audio Engine (Web Audio)  │               │      Context & Calendar Engine          │
-│  - Mic AnalyserNode (VAD)               │               │  - Google Calendar OAuth Sync           │
-│  - Meeting Speaker Monitor (Stream)     │               │  - Local Meeting Schedule Fallback      │
-│  - Auto Speech Energy & Gate Detector   │               │  - Automatic Active Call Matcher        │
-│  - 5-second "Undo / Unmuted" Window     │               └────────────────────┬────────────────────┘
-└───────────────────┬─────────────────────┘                                    │
-                    │                                                          │
-                    ▼                                                          ▼
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   Central State & Ledger Store                                    │
-│  - Privacy Consent Agreed (boolean flag + timestamp)                                              │
-│  - User Persona ('saint' | 'pragmatist' | 'roastmaster')                                          │
-│  - Listening State & Audio Sensitivity Levels                                                     │
-│  - Current Month Mute Ledger (id, timestamp, meetingTitle, duration, status)                      │
-│  - Historical Monthly Archives (last month, 12-month rolling stats)                               │
-│  - Pledge & Goal Action Log (status, actionedAt, actionNotes, evidenceUrl)                        │
-│  - Settings (sound FX toggle/volume, reminder day, currency, country, customCharityUrl)           │
-└───────────────────────────────────────────┬───────────────────────────────────────────────────────┘
-                                            │
-       ┌────────────────────────────────────┼────────────────────────────────────┐
-       ▼                                    ▼                                    ▼
-┌───────────────────────────┐ ┌───────────────────────────┐ ┌───────────────────────────────────────┐
-│    Cartoon Glass Jar      │ │   Dashboard & Analytics   │ │     Monthly Review & Action Loop      │
-│  - SVG/Canvas Glass Body  │ │  - Current Month Total    │ │  - Global/Regional Aggregators        │
-│  - Persona Emblem Sticker │ │  - Last Month Comparison  │ │  - Custom Charity URL Input           │
-│  - Bouncing Coin Physics  │ │  - 12-Month Average Trend │ │  - Work & Personal Pledge Action Log  │
-│  - Synthesized Sound FX   │ │  - Meeting Log Table      │ │  - Gemini AI Suggestion Engine        │
-│  - Dynamic Fill Level     │ │  - Active Action Card     │ │  - Completion Card Generator          │
-└───────────────────────────┘ └───────────────────────────┘ └───────────────────┬───────────────────┘
-                                                                                │
-                                                                                ▼
-                                                              ┌───────────────────────────────────┐
-                                                              │ Server Route (/api/pledges)       │
-                                                              │ - @google/genai (gemini-3.8-flash)│
-                                                              │ - Persona-tuned prompt generation │
-                                                              └───────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│ [MuteJar Logo] Mute Jar      [🔒 Local VAD Only]     [Theme] [Profile] [Settings]  │
+├───────────────────────────────────────────────────────────────────────────────────┤
+│ [HUD Strip: 🟢 Monitoring Active  |  Default Mic ▾  |  Noise Margin: 18dB  | ⌘Z Undo] │
+├─────────────────────────────────────────┬─────────────────────────────────────────┤
+│ LEFT COLUMN (48% Width):                │ RIGHT COLUMN (52% Width):               │
+│ Interactive Physics Jar & Brand Anchor │ Philosophy Milestone & Performance HUD  │
+│                                         │                                         │
+│ ┌─────────────────────────────────────┐ │ ┌─────────────────────────────────────┐ │
+│ │ 🫙 Cartoon Glass Jar                │ │ │ 🎯 Philosophy Target Card             │ │
+│ │  - Realistic 3D glass sheen         │ │ │  - Active Target (e.g. 25 Mutecoins)│ │
+│ │  - Bouncing cartoon Mutecoins       │ │ │  - Progress Bar & Currency Equiv    │ │
+│ │  - Cork lid & Persona Emblem        │ │ │  - Quick "Edit Milestone" Action    │ │
+│ │                                     │ │ └─────────────────────────────────────┘ │
+│ │ 34 Mutecoins Accumulated            │ │ ┌─────────────────────────────────────┐ │
+│ │ (≈ $34.00 Charity Payout)           │ │ │ 📊 Comparative Cycle Analytics      │ │
+│ │ [Drop Test Coin] [Review & Redeem]  │ │ │  - This Cycle vs. Last Cycle        │ │
+│ └─────────────────────────────────────┘ │ │  - 12-Month Rolling Average         │ │
+│                                         │ │  - Streak & Habit Consistency       │ │
+│                                         │ │ └─────────────────────────────────────┘ │
+│                                         │ │ ┌─────────────────────────────────────┐ │
+│                                         │ │ │ 📋 Recent Slip-Up Ledger (Collapsible)│ │
+│                                         │ │ │  - Meeting tags & timestamps      │ │
+│                                         │ └─────────────────────────────────────┘ │
+└─────────────────────────────────────────┴─────────────────────────────────────────┘
 ```
 
-### Data Structures & State
-- **`PrivacyConsent`**: `{ hasConsented: boolean, consentedAt: number, version: string }`
-- **`PersonaType`**: `'saint' | 'pragmatist' | 'roastmaster'`
-- **`CharityAggregator`**: `{ id: string, name: string, region: 'global'|'us'|'uk'|'au'|'ca'|'custom', url: string, description: string, feeInfo: string }`
-- **`PledgeActionRecord`**: `{ id: string, monthKey: string, type: 'charity'|'pledge'|'goal', title: string, description: string, coinsCommitted: number, estimatedValue: string, status: 'pending'|'in_progress'|'completed', actionedAt?: number, actionNotes?: string, donationUrl?: string }`
-- **`MuteRecord`**: `{ id: string, timestamp: number, meetingTitle: string, durationSeconds: number, undone: boolean, monthKey: string }`
-- **`UserSettings`**: `{ privacyConsent: PrivacyConsent, persona: PersonaType, soundEnabled: boolean, soundVolume: number, sensitivity: number, autoDetectMeetingAudio: boolean, reminderDay: number, country: string, currency: string, perCoinValue: number, hasCompletedOnboarding: boolean, customCharityUrl?: string }`
+| # | Friction / Current State | Recommended Improvement | UX & Ergonomic Rationale |
+| :--- | :--- | :--- | :--- |
+| **2.1** | **Vertical Scroll on 1080p Laptops**: Long card stacks force users to scroll between jar and pledge progress. | **Fixed-Viewport Two-Column Grid (`grid-cols-12`)**: Left column (5 cols) anchors the interactive Jar; right column (7 cols) anchors the Target Progress, Comparative Stats, and Ledger. | Both core tasks (visualizing the jar and checking goal progress) remain visible simultaneously above the fold. |
+| **2.2** | **Meeting Ledger Clutter**: Full list of mute records pushes important monthly progress cards down. | **Smart Collapsible Accordion with Top 3 Summary**: Show the 3 most recent meetings with an unobtrusive `Show all N meetings` disclosure toggle. | Keeps the default screen calm and uncluttered while retaining instant drill-down capability. |
+| **2.3** | **Responsive Window Snapping (PWA / Split Screen)**: Snapping the app to half-screen during a Zoom call can cause card clipping. | **Fluid Responsive Breakpoint**: Automatically collapse side-by-side into a streamlined vertical single-column view when window width $<860\text{px}$, prioritizing the Jar and HUD. | Ideal for desktop users running Mute Jar alongside their video conference window. |
 
-### Verification & Testing Plan
-1. **Privacy Statement & Consent**: Verify mandatory tickbox consent blocking audio access until accepted.
-2. **Onboarding Flow**: Verify persona selection (The Saint, The Pragmatist, The Roast Master).
-3. **Charity Aggregator System**: Verify list of global and regional aggregators (GlobalGiving, Every.org, PayPal Giving Fund, JustGiving, GiveNow, CanadaHelps, Benevity) and custom charity URL handling.
-4. **Pledge & Goal Action Tracking**: Verify logging "When" (completion date) and "How" (action notes), status transitions, and history archive.
-5. **Audio Detection**: Verify microphone permissions, speech energy detection, ambient threshold calibration, and 5-second automatic undo function.
-6. **Cartoon Jar & Coin Physics**: Verify visual rendering of cartoon glass jar with persona emblem, smooth coin drop animations, stacking behavior, and synthesized sound effects.
-7. **Code Quality**: Verify via `compile_applet` and `lint_applet` for clean compilation.
+---
+
+### Area 3: Discrete Privacy & Security Cues
+
+| # | Friction / Current State | Recommended Improvement | UX & Ergonomic Rationale |
+| :--- | :--- | :--- | :--- |
+| **3.1** | **Banner Fatigue vs Reassurance**: Large privacy warning boxes create anxiety, while no disclosure leaves users wondering if audio is recorded. | **Discrete Shield Badge with Live Status Indicator**: Place a quiet pill in the top header: `[🔒 Local Audio Only · RAM VAD]`. Hovering or clicking reveals a clean 3-point popover: *(1) Processed 100% in local memory, (2) Zero cloud transit or recording, (3) Not a speech-to-text tool.* | Delivers authentic user peace of mind without visual noise or permanent card intrusion. |
+| **3.2** | **OS Do Not Disturb / Focus Sync Transparency**: When the OS enters Focus mode, users need to know why the monitor is paused. | **Automatic Status Reason Badge**: When paused by DND, display `Paused: macOS Focus Active (Auto-Resumes when Focus Ends)` with a 1-click `Resume Anyway` override. | Eliminates confusion over whether the audio monitor crashed or was intentionally paused by system policy. |
+| **3.3** | **Microphone Indicator Clarity**: Browsers show a red dot in the tab, but users want to know what Mute Jar specifically does with the mic stream. | **Non-Intrusive Mic Telemetry Tooltip**: Clicking the mic name in the HUD shows sample rate (e.g. `48 kHz`), latency (`<10ms`), and active background filter state (`Near-field noise rejection active`). | Builds credibility for technical and enterprise users without cluttering novice users. |
+
+---
+
+### Area 4: Accessibility, Sound, & Interaction Polish
+
+| # | Friction / Current State | Recommended Improvement | UX & Ergonomic Rationale |
+| :--- | :--- | :--- | :--- |
+| **4.1** | **Sound FX Previews**: Users couldn't hear sound effects before enabling them in meetings. | **In-Context System Sound Preview Button** *(Already Implemented)*: Provide an instant 1-click test button for all 9 synthesized options. | Prevents awkward surprises in meetings by letting users sample synthesized chimes in advance. |
+| **4.2** | **Screen Reader Announcements**: Coin drops and undo countdowns are purely visual animations. | **Live Region Announcements (`aria-live="polite"`)**: Dispatch quiet screen-reader updates: `"Mutecoin deposited for Standup meeting. Press Cmd+Z within 5 seconds to undo."` | Ensures complete WCAG 2.1 AA compliance for visually impaired professionals. |
+| **4.3** | **Color-Blind Friendly Status Indicators**: Green/Red toggles can be hard to differentiate for protanopia/deuteranopia users. | **Compound Glyph + Shape Indicators**: Combine colors with distinct iconography (e.g. Green Circle with Play Triangle for Active, Red Circle with Double Pause Bars for Paused, Slate Shield for DND). | Adheres to WCAG Guideline 1.4.1 (Use of Color). |
+
+---
+
+## 3. Prioritized Implementation Roadmap
+
+Following your review and approval, improvements can be rolled out in 3 manageable, zero-downtime phases:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ PHASE 1: Real-Time HUD Ergonomics & Glanceability (Highest Impact)     │
+│  - Consolidated segmented HUD bar with mic & sensitivity controls      │
+│  - Dual-zone energy meter (Ambient Floor vs Voice Trigger Gate)         │
+│  - Prominent HUD Undo button + Cmd+Z / Ctrl+Z keyboard listener        │
+├────────────────────────────────────────────────────────────────────────┤
+│ PHASE 2: Balanced Side-by-Side Layout & Responsive Window Snapping      │
+│  - Ergonomic 50/50 desktop split (Jar on left, Stats/Target on right)   │
+│  - Collapsible meeting history accordion (Top 3 default)               │
+│  - Fluid narrow-window snapping for side-by-side meeting usage          │
+├────────────────────────────────────────────────────────────────────────┤
+│ PHASE 3: Discrete Privacy Shield Popover & Accessibility Hardening     │
+│  - Interactive [🔒 Local Audio Only] header popover card                │
+│  - WCAG compound glyph status indicators (Color-blind friendly)         │
+│  - aria-live polite announcements for speech events and undo windows    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4. Next Steps
+
+1. **Review Recommendations**: Inspect the proposed UX improvements and prioritization matrix above.
+2. **Provide Feedback**: Let me know if you would like to adjust any priorities, add specific meeting workflows, or proceed with Phase 1 implementation.

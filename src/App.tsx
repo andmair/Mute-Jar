@@ -18,6 +18,7 @@ import { DesktopBackgroundGuideModal } from './components/DesktopBackgroundGuide
 import { UserProfileModal, getAvatarEmoji } from './components/UserProfileModal';
 import { PhilosophyTargetCard } from './components/PhilosophyTargetCard';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { MuteJarLogo } from './components/MuteJarLogo';
 import { getPhilosophyCombinedLabel } from './utils/philosophyLabels';
 import { sanitizeUrl } from './utils/security';
 import {
@@ -27,6 +28,7 @@ import {
   Calendar,
   Gift,
   Shield,
+  ShieldCheck,
   Moon,
   Sun,
   Monitor,
@@ -60,6 +62,7 @@ const MainAppContent: React.FC = () => {
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [isBackgroundGuideOpen, setIsBackgroundGuideOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isPrivacyPopoverOpen, setIsPrivacyPopoverOpen] = useState(false);
 
   const philosophyInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
 
@@ -79,14 +82,61 @@ const MainAppContent: React.FC = () => {
       {/* 3-Zone Top Navigation Bar Contract */}
       <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-8">
-          {/* Zone 1: Brand Wordmark */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-xl coin-shimmer flex items-center justify-center border border-amber-300 shadow-xs">
-              <MicOff className="w-4 h-4 text-amber-950" />
+          {/* Zone 1: Brand Wordmark & Discrete Privacy Badge */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <MuteJarLogo className="w-8 h-8" animated />
+              <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+                Mute Jar
+              </span>
             </div>
-            <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-              Mute Jar
-            </span>
+
+            {/* Discrete Privacy Shield Badge with Interactive Popover */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsPrivacyPopoverOpen((prev) => !prev)}
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 transition-colors cursor-pointer select-none"
+                title="Strict Local Audio Privacy Guarantee · Click to inspect"
+                aria-expanded={isPrivacyPopoverOpen}
+                aria-label="Privacy guarantee: local audio monitoring only"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span>Local VAD Only</span>
+              </button>
+
+              {isPrivacyPopoverOpen && (
+                <div className="absolute left-0 mt-2 z-50 w-72 p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl text-xs space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      <span>Zero-Recording Privacy</span>
+                    </span>
+                    <button
+                      onClick={() => setIsPrivacyPopoverOpen(false)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer"
+                      aria-label="Close privacy details"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <ul className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-500 font-bold">✓</span>
+                      <span><strong>100% In-Memory:</strong> Voice activity is calculated strictly in temporary browser RAM.</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-500 font-bold">✓</span>
+                      <span><strong>Zero Audio Saved:</strong> No audio files, microphone recordings, or transcripts are created.</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-500 font-bold">✓</span>
+                      <span><strong>Immediate Clearance:</strong> Audio waveforms are discarded every 50ms buffer cycle.</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Zone 2: Single-Line Text Nav Links */}
@@ -262,15 +312,15 @@ const MainAppContent: React.FC = () => {
           <div className="absolute -top-12 -left-12 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Side by side layout: Jar 2/3 width on left, Mute Check 1/3 width on right (stacked with jar on top on mobile) */}
-          <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-stretch justify-between gap-6 lg:gap-8">
-            {/* Left Side: 3D Mute Jar taking 2/3 width on desktop, stacked on top on mobile */}
-            <div className="w-full lg:w-2/3 flex flex-col items-center justify-center px-2 sm:px-4 py-2">
+          {/* Balanced Side-by-Side layout: Jar on Left (50%), Mute Check on Right (50%) */}
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 items-stretch gap-6 lg:gap-8">
+            {/* Left Side: 3D Mute Jar taking balanced 50% width on desktop */}
+            <div className="w-full flex flex-col items-center justify-center px-2 sm:px-4 py-2">
               <CartoonJar />
             </div>
 
-            {/* Right Side: Merged Mute Check Box taking 1/3 width on desktop, stacked below on mobile */}
-            <div className="w-full lg:w-1/3 min-w-0 flex flex-col justify-between self-stretch py-2">
+            {/* Right Side: Merged Mute Check Box taking balanced 50% width on desktop */}
+            <div className="w-full min-w-0 flex flex-col justify-between self-stretch py-2">
               <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-400/10 to-amber-500/5 dark:from-amber-950/40 dark:via-slate-800/80 dark:to-slate-900/60 border border-amber-300/80 dark:border-amber-500/30 shadow-xs flex flex-col justify-between gap-5 h-full">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

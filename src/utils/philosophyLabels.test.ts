@@ -21,13 +21,13 @@ describe('Philosophy Labels & Metadata', () => {
   });
 
   it('provides accurate target units and nouns for all personas', () => {
-    expect(PHILOSOPHY_CONFIGS.saint.targetUnitLabel).toBe('MuteCoins');
+    expect(PHILOSOPHY_CONFIGS.saint.targetUnitLabel).toBe('Mutecoins');
     expect(PHILOSOPHY_CONFIGS.saint.targetNoun).toBe('Donation Threshold');
 
-    expect(PHILOSOPHY_CONFIGS.pragmatist.targetUnitLabel).toBe('MuteCoins');
+    expect(PHILOSOPHY_CONFIGS.pragmatist.targetUnitLabel).toBe('Mutecoins');
     expect(PHILOSOPHY_CONFIGS.pragmatist.targetNoun).toBe('Habit Milestone Target');
 
-    expect(PHILOSOPHY_CONFIGS.roastmaster.targetUnitLabel).toBe('MuteCoins');
+    expect(PHILOSOPHY_CONFIGS.roastmaster.targetUnitLabel).toBe('Mutecoins');
     expect(PHILOSOPHY_CONFIGS.roastmaster.targetNoun).toBe('Forfeit Trigger Target');
   });
 

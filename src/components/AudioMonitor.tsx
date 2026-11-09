@@ -25,6 +25,9 @@ import {
   Trash2,
   Fingerprint,
   Moon,
+  Play,
+  Pause,
+  Command,
 } from 'lucide-react';
 
 export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
@@ -112,6 +115,13 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
 
   return (
     <div className="relative w-full">
+      {/* Screen Reader Announcement Live Region */}
+      <div aria-live="polite" className="sr-only" role="status">
+        {activeGraceRecord
+          ? `Mutecoin added for ${activeGraceRecord.meetingTitle}. Press Command Z or Control Z within ${graceSecondsLeft} seconds to undo.`
+          : ''}
+      </div>
+
       {/* 5-Second Grace Window Toast (Floating Alert) */}
       <AnimatePresence>
         {activeGraceRecord && (
@@ -132,7 +142,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                     Mutecoin Added · {activeGraceRecord.meetingTitle}
                   </div>
                   <div className="text-[11px] font-medium opacity-90">
-                    Auto-confirming in {graceSecondsLeft}s...
+                    Auto-confirming in {graceSecondsLeft}s · Press <strong>⌘Z</strong> to undo
                   </div>
                 </div>
               </div>
@@ -142,7 +152,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                 className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-md shrink-0 cursor-pointer active:scale-95"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                <span>Undo (I was unmuted)</span>
+                <span>Undo (⌘Z)</span>
               </button>
             </div>
           </motion.div>
@@ -152,7 +162,7 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
       {/* Main Monitoring Bar Card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
-          {/* Status Left: Clean Title 'Audio Monitor', Mic Icon, Status Badge with Color */}
+          {/* Status Left: Clean Title 'Audio Monitor', Mic Icon, Status Badge with Color & Glyphs */}
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors shadow-2xs ${
@@ -173,19 +183,19 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
                 <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Audio Monitor
                 </span>
-                {/* Audio monitor status indicated by color and icon */}
+                {/* Audio monitor status indicated by compound color, shape, and icon */}
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                     audioState.isListening
                       ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      audioState.isListening ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                    }`}
-                  />
+                  {audioState.isListening ? (
+                    <Play className="w-3 h-3 fill-emerald-600 dark:fill-emerald-400 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Pause className="w-3 h-3 fill-slate-400 text-slate-400" />
+                  )}
                   <span>{audioState.isListening ? 'Live' : 'Paused'}</span>
                 </span>
 
@@ -209,7 +219,20 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
 
           {/* Action Buttons Right: All neatly aligned on the SAME horizontal level */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-            {/* Background Filter Toggle Button (replacing the misaligned active box) */}
+            {/* Prominent Instant Undo Pill in HUD (during 5s grace window) */}
+            {activeGraceRecord && (
+              <button
+                type="button"
+                onClick={() => undoMuteCoin()}
+                className="h-9 px-3 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-md flex items-center gap-1.5 cursor-pointer animate-pulse shrink-0"
+                title="Undo last Mutecoin deposit (or press Cmd+Z / Ctrl+Z)"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Undo (⌘Z · {graceSecondsLeft}s)</span>
+              </button>
+            )}
+
+            {/* Background Filter Toggle Button */}
             <button
               type="button"
               onClick={() =>
@@ -572,17 +595,22 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
               </div>
 
               {/* Legend row */}
-              <div className="flex justify-between items-center text-[10px] text-slate-400 px-1 font-mono">
-                <span>0% (Silence)</span>
+              <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 px-1 font-mono">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  <span>Silence (0%)</span>
+                </span>
                 {settings.filterRadioBackground !== false && (
-                  <span className="text-indigo-600 dark:text-indigo-400 font-medium">
-                    ◀ Filtered Noise Floor ({audioState.noiseFloor || 10}%)
+                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                    <span>Safe Room Floor ({audioState.noiseFloor || 10}%)</span>
                   </span>
                 )}
-                <span className="text-rose-600 dark:text-rose-400 font-bold">
-                  Trigger Line ({audioState.threshold}%) ▶
+                <span className="text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  <span>Speech Trigger Gate ({audioState.threshold}%)</span>
                 </span>
-                <span>100%</span>
+                <span>Peak (100%)</span>
               </div>
             </div>
 

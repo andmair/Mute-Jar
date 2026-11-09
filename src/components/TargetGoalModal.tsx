@@ -47,7 +47,7 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
   );
   const [pragmatistGoalDesc, setPragmatistGoalDesc] = useState<string>(
     settings.pragmatistGoalDescription ||
-      'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.'
+      'Perform 5 pushups and read 10 book pages for every Mutecoin dropped this month.'
   );
   const [pragmatistTargetCoins, setPragmatistTargetCoins] = useState<number>(
     settings.pragmatistTargetCoins || 25
@@ -75,7 +75,7 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
       setPragmatistGoalTitle(settings.pragmatistGoalTitle || '50 Pushups & 100 Pages Read');
       setPragmatistGoalDesc(
         settings.pragmatistGoalDescription ||
-          'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.'
+          'Perform 5 pushups and read 10 book pages for every Mutecoin dropped this month.'
       );
       setPragmatistTargetCoins(settings.pragmatistTargetCoins || 25);
 
@@ -109,7 +109,7 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
         customCharityUrl: cleanUrl,
         saintTargetCoins: Math.max(1, saintTargetCoins),
         activeTargetTitle: `Donation Target: ${cleanName}`,
-        activeTargetDescription: `Donation threshold set at ${saintTargetCoins} MuteCoins (${formatCurrency(
+        activeTargetDescription: `Donation threshold set at ${saintTargetCoins} Mutecoins (${formatCurrency(
           saintTargetCoins * settings.perCoinValue
         )}).`,
       });
@@ -142,17 +142,17 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
   const pragmatistTemplates = [
     {
       title: '50 Pushups & 100 Pages Read',
-      desc: 'Perform 5 pushups and read 10 book pages for every mute coin dropped this month.',
+      desc: 'Perform 5 pushups and read 10 book pages for every Mutecoin dropped this month.',
       target: 25,
     },
     {
       title: '10 Deep-Work Focus Sprints',
-      desc: 'Log a 30-minute distraction-free coding/writing block for every 2 mute coins.',
+      desc: 'Log a 30-minute distraction-free coding/writing block for every 2 Mutecoins.',
       target: 20,
     },
     {
       title: '15-Mile Jog / Cycling Challenge',
-      desc: 'Commit 1 mile of outdoor running or brisk cardio for each mute coin accumulated.',
+      desc: 'Commit 1 mile of outdoor running or brisk cardio for each Mutecoin accumulated.',
       target: 15,
     },
     {
@@ -337,12 +337,12 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
                 </div>
               )}
 
-              {/* Saint Target Threshold in MuteCoins */}
+              {/* Saint Target Threshold in Mutecoins */}
               <div className="p-4 rounded-2xl bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/60 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="font-bold text-slate-900 dark:text-white block">
-                      Donation Payout Threshold (in MuteCoins)
+                      Donation Payout Threshold (in Mutecoins)
                     </label>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
                       When your jar reaches this many coins, you will be prompted to donate.
@@ -405,26 +405,26 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
                     rows={2}
                     value={pragmatistGoalDesc}
                     onChange={(e) => setPragmatistGoalDesc(e.target.value)}
-                    placeholder="How each mute coin translates into fitness, focus, or study..."
+                    placeholder="How each Mutecoin translates into fitness, focus, or study..."
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs resize-none"
                   />
                 </div>
               </div>
 
-              {/* Goal Target in MuteCoins (NOT currency) */}
+              {/* Goal Target in Mutecoins (NOT currency) */}
               <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="font-bold text-slate-900 dark:text-white block">
-                      Goal Milestone Target (in MuteCoins)
+                      Goal Milestone Target (in Mutecoins)
                     </label>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Measured strictly in mutecoins (slip-up accountability reps).
+                      Measured strictly in Mutecoins (slip-up accountability reps).
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-base font-black font-mono text-amber-600 dark:text-amber-400">
-                      {pragmatistTargetCoins} MuteCoins
+                      {pragmatistTargetCoins} Mutecoins
                     </span>
                   </div>
                 </div>
@@ -512,20 +512,20 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
                 </div>
               </div>
 
-              {/* Activity Target in MuteCoins (NOT currency) */}
+              {/* Activity Target in Mutecoins (NOT currency) */}
               <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="font-bold text-slate-900 dark:text-white block">
-                      Forfeit Trigger Target (in MuteCoins)
+                      Forfeit Trigger Target (in Mutecoins)
                     </label>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Measured strictly in mutecoins (unmute blunder threshold).
+                      Measured strictly in Mutecoins (unmute blunder threshold).
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="text-base font-black font-mono text-rose-600 dark:text-rose-400">
-                      {roastTargetCoins} MuteCoins
+                      {roastTargetCoins} Mutecoins
                     </span>
                   </div>
                 </div>
