@@ -7,7 +7,7 @@ Compiled single-file installers are organized by operating system into the sub-f
 - `installers/linux/` — `.AppImage` & `.deb`
 - `installers/chromeos/` — 1-click PWA install instructions
 
-To download the latest compiled installers from GitHub:
-1. Open the repository's **Actions** tab and select the latest **Build & Release Desktop Installers** run.
-2. Download `mutejar-installers-all-os` (contains all OS sub-folders) or the individual OS artifact (`installers-macos`, `installers-windows`, `installers-linux`).
+### How Downloads Work
+1. When a branch commit finishes building on GitHub Actions, the workflow automatically copies the compiled binaries into `installers/macos/`, `installers/windows/`, and `installers/linux/` (alongside each folder's `README.md`) and commits them back with `[skip ci]`.
+2. You can download installers directly from the repository folders, from **GitHub → Actions** artifacts (`mutejar-installers-all-os`), or directly inside Mute Jar (**Setup → Desktop Installers**, served via `/downloads`).
 3. Tagged builds (`v*`) also attach all single-file installers to **GitHub → Releases**.

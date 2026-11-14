@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build-installers:
+    if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip ci]')
     strategy:
       fail-fast: false
       matrix:
@@ -82,34 +83,54 @@ jobs:
           if-no-files-found: error
 
   collect-and-release:
-    name: Bundle All OS Folders & Publish Tag Release
+    name: Copy Installers to OS Folders & Publish Release
     needs: build-installers
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ startsWith(github.ref, 'refs/heads/') && github.ref_name || '' }}
+          fetch-depth: 0
 
-      - name: Download macOS installers
+      - name: Clear previous staged binaries while keeping OS README files
+        run: find installers/macos installers/windows installers/linux -type f ! -name 'README.md' -delete
+
+      - name: Copy macOS installers into installers/macos/
         uses: actions/download-artifact@v4
         with:
           name: installers-macos
           path: installers/macos
 
-      - name: Download Windows installers
+      - name: Copy Windows installers into installers/windows/
         uses: actions/download-artifact@v4
         with:
           name: installers-windows
           path: installers/windows
 
-      - name: Download Linux installers
+      - name: Copy Linux installers into installers/linux/
         uses: actions/download-artifact@v4
         with:
           name: installers-linux
           path: installers/linux
 
-      - name: List combined installers directory
-        run: find installers -maxdepth 2 -type f -ls
+      - name: Verify installers and README files per OS folder
+        run: ls -la installers/macos installers/windows installers/linux installers/chromeos
+
+      - name: Commit compiled installers to OS folders on branch
+        if: startsWith(github.ref, 'refs/heads/')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add installers/macos installers/windows installers/linux
+          if git diff --cached --quiet; then
+            echo "No installer changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(installers): update compiled OS installers [skip ci]"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
 
       - name: Upload combined multi-OS installers bundle
         uses: actions/upload-artifact@v4
