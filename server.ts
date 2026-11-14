@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { listInstallersCatalog, resolveInstallerFilePath } from './server/downloadsHelper';
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(express.json());
 
 // Allow standalone Tauri desktop bundles to connect to the optional local sidecar on port 3000
-app.use('/api', (req, res, next) => {
+app.use(['/api', '/downloads'], (req, res, next) => {
   const origin = req.headers.origin;
   if (
     origin === 'tauri://localhost' ||
@@ -503,6 +504,29 @@ app.post('/api/integrations/relay-webhook', async (req, res) => {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
+});
+
+// -------------------------------------------------------------
+// Staged Single-File Desktop Installers (/downloads)
+// Serves binaries dropped into installers/{macos,windows,linux,chromeos}
+// -------------------------------------------------------------
+const INSTALLERS_ROOT = path.resolve(__dirname, 'installers');
+
+app.get('/downloads', (_req, res) => {
+  const installers = listInstallersCatalog(INSTALLERS_ROOT);
+  const totalCount = Object.values(installers).reduce((sum, list) => sum + list.length, 0);
+  res.json({ installers, totalCount });
+});
+
+app.get('/downloads/:os/:filename', (req, res) => {
+  const { os: osFolder, filename } = req.params;
+  const filePath = resolveInstallerFilePath(INSTALLERS_ROOT, osFolder, filename);
+  if (!filePath) {
+    return res.status(404).json({
+      error: 'Installer file not found in installers/<os>/',
+    });
+  }
+  return res.download(filePath, path.basename(filePath));
 });
 
 // Dev vs Production server handling

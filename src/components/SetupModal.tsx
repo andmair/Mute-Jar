@@ -89,6 +89,52 @@ export const SetupModal: React.FC<SetupModalProps> = ({
   const [mcpInspectorData, setMcpInspectorData] = useState<Record<string, unknown> | null>(null);
   const [isLoadingMcp, setIsLoadingMcp] = useState(false);
 
+  // Staged /downloads installer catalog state
+  type InstallerCatalogMap = Record<
+    'macos' | 'windows' | 'linux' | 'chromeos',
+    Array<{
+      filename: string;
+      os: string;
+      sizeBytes: number;
+      updatedAt: string;
+      downloadUrl: string;
+    }>
+  >;
+  const [installersCatalog, setInstallersCatalog] = useState<InstallerCatalogMap>({
+    macos: [],
+    windows: [],
+    linux: [],
+    chromeos: [],
+  });
+  const [isLoadingDownloads, setIsLoadingDownloads] = useState(false);
+
+  const loadInstallersCatalog = React.useCallback(async () => {
+    setIsLoadingDownloads(true);
+    try {
+      const res = await fetch(getLocalApiUrl('/downloads'));
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.installers) {
+        setInstallersCatalog({
+          macos: Array.isArray(data.installers.macos) ? data.installers.macos : [],
+          windows: Array.isArray(data.installers.windows) ? data.installers.windows : [],
+          linux: Array.isArray(data.installers.linux) ? data.installers.linux : [],
+          chromeos: Array.isArray(data.installers.chromeos) ? data.installers.chromeos : [],
+        });
+      }
+    } catch {
+      // Static/offline mode without Express sidecar
+    } finally {
+      setIsLoadingDownloads(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isOpen && activeTab === 'packaging') {
+      loadInstallersCatalog();
+    }
+  }, [isOpen, activeTab, loadInstallersCatalog]);
+
   if (!isOpen) return null;
 
   const handleAddChannel = (e: React.FormEvent) => {
@@ -200,6 +246,21 @@ export const SetupModal: React.FC<SetupModalProps> = ({
     totalCycleCoins: Math.max(1, currentCycleCoins),
     roastQuote: 'Coffee shout incoming!',
   });
+
+  const activeOsFolder: 'macos' | 'windows' | 'linux' | 'chromeos' =
+    selectedOsTab === 'mac' ? 'macos' : selectedOsTab;
+  const activeOsDownloads = installersCatalog[activeOsFolder] || [];
+  const totalStagedDownloads =
+    installersCatalog.macos.length +
+    installersCatalog.windows.length +
+    installersCatalog.linux.length +
+    installersCatalog.chromeos.length;
+
+  const formatInstallerSize = (bytes: number) => {
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${bytes} B`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-fade-in">
@@ -872,7 +933,7 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         </span>
                       </div>
                       <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                        <li>Download the single <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_x64-setup.exe</code> (or enterprise <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.msi</code>) from GitHub Releases.</li>
+                        <li>Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_x64-setup.exe</code> or <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.msi</code> below (or from GitHub Actions artifacts).</li>
                         <li>Double-click the installer—Windows 10/11 already includes WebView2, so installation finishes in seconds.</li>
                         <li>Launch <strong>Mute Jar</strong> from the Start Menu and grant microphone access when starting the monitor.</li>
                       </ol>
@@ -891,7 +952,7 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         </span>
                       </div>
                       <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                        <li>Download the single Universal <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_universal.dmg</code> from GitHub Releases.</li>
+                        <li>Download the single Universal <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.dmg</code> below (or from GitHub Actions artifacts).</li>
                         <li>Open the <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.dmg</code> and drag <strong>Mute Jar.app</strong> into your <strong>Applications</strong> folder.</li>
                         <li>On first launch, approve microphone permission in <strong>System Settings → Privacy &amp; Security → Microphone</strong> (pre-configured via <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">src-tauri/Info.plist</code>).</li>
                       </ol>
@@ -909,8 +970,8 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         </span>
                       </div>
                       <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                        <li><strong>Zero-install AppImage</strong> (Ubuntu, Fedora, Arch): Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_amd64.AppImage</code>, run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">chmod +x MuteJar*.AppImage</code>, and launch directly.</li>
-                        <li><strong>Debian / Ubuntu package</strong>: Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_amd64.deb</code> and run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">sudo apt install ./MuteJar*.deb</code> for desktop menu integration.</li>
+                        <li><strong>Zero-install AppImage</strong> (Ubuntu, Fedora, Arch): Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.AppImage</code>, run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">chmod +x MuteJar*.AppImage</code>, and launch directly.</li>
+                        <li><strong>Debian / Ubuntu package</strong>: Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.deb</code> and run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">sudo apt install ./MuteJar*.deb</code> for desktop menu integration.</li>
                       </ol>
                     </>
                   )}
@@ -927,11 +988,74 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         </span>
                       </div>
                       <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                        <li>Open Mute Jar in Chrome and click <strong>Install</strong> in the omnibox (or <strong>Install App</strong> in this modal).</li>
+                        <li>Open Mute Jar in Chrome and click <strong>Install</strong> in the omnibox (or click <strong>Install App</strong> below).</li>
                         <li>Right-click the Mute Jar icon on the ChromeOS Shelf to pin it or enable <strong>Open on startup</strong> in ChromeOS Settings.</li>
                       </ol>
                     </>
                   )}
+
+                  {/* Direct Download Links served from /downloads (<project>/installers/<os>/) */}
+                  <div className="pt-3 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                        Available Downloads (<code className="font-mono">installers/{activeOsFolder}/</code>)
+                        {totalStagedDownloads > 0 && ` · ${totalStagedDownloads} total ready`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={loadInstallersCatalog}
+                        disabled={isLoadingDownloads}
+                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isLoadingDownloads ? 'animate-spin' : ''}`} />
+                        <span>{isLoadingDownloads ? 'Checking...' : 'Refresh'}</span>
+                      </button>
+                    </div>
+
+                    {activeOsDownloads.length > 0 ? (
+                      <div className="divide-y divide-slate-200/70 dark:divide-slate-700/60">
+                        {activeOsDownloads.map((item) => (
+                          <div
+                            key={item.filename}
+                            className="py-2 flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="font-mono text-[11px] font-semibold text-slate-900 dark:text-white truncate">
+                                {item.filename}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {formatInstallerSize(item.sizeBytes)} · /downloads/{activeOsFolder}/
+                              </div>
+                            </div>
+                            <a
+                              href={getLocalApiUrl(item.downloadUrl)}
+                              download={item.filename}
+                              className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download</span>
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>
+                          No compiled binaries placed in <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">installers/{activeOsFolder}/</code> yet. Drop build artifacts there and click Refresh to serve them via <code className="font-mono">/downloads</code>.
+                        </span>
+                        {selectedOsTab === 'chromeos' && isInstallable && !isInstalled && (
+                          <button
+                            type="button"
+                            onClick={install}
+                            className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+                          >
+                            <span>Install PWA</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -943,12 +1067,14 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                     <span>Build Single-File Package Locally</span>
                   </h4>
                   <p className="text-[11px]">
-                    Requires Rust toolchain + Tauri v2 CLI. Cross-platform release builds are automated in{' '}
-                    <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.github/workflows/release-desktop.yml</code>.
+                    Requires Rust + Tauri v2 CLI locally, or push any commit to trigger{' '}
+                    <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.github/workflows/release-desktop.yml</code>{' '}
+                    and download all OS sub-folders from GitHub Actions artifacts.
                   </p>
                   <pre className="p-2.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px] overflow-x-auto">
 {`npm run desktop:icons
-npm run desktop:build`}
+npm run desktop:build
+node scripts/stage-installers.mjs`}
                   </pre>
                 </div>
 

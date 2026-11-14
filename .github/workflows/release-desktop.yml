@@ -1,28 +1,33 @@
-name: Release Desktop Installers
+name: Build & Release Desktop Installers
 
 on:
   push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: desktop-build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
-  publish-tauri:
+  build-installers:
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: macos-latest
             args: '--target universal-apple-darwin'
+            os_folder: macos
             os_label: macOS (Universal .dmg)
           - platform: windows-latest
             args: ''
+            os_folder: windows
             os_label: Windows (.exe / .msi)
           - platform: ubuntu-22.04
             args: ''
+            os_folder: linux
             os_label: Linux (.AppImage / .deb)
 
     name: Build ${{ matrix.os_label }}
@@ -43,6 +48,11 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Cache Rust / Tauri build dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
       - name: Install Linux WebKitGTK dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -52,17 +62,77 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Type-check TypeScript
+        run: npm run lint
+
       - name: Generate platform icons from app icon
-        run: npx --yes @tauri-apps/cli@^2 icon public/pwa-512x512.png
+        run: npm run desktop:icons
 
       - name: Build single-file OS installers
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes @tauri-apps/cli@^2 build ${{ matrix.args }}
+
+      - name: Stage installers into OS folder
+        run: node scripts/stage-installers.mjs
+
+      - name: Upload ${{ matrix.os_label }} installers artifact
+        uses: actions/upload-artifact@v4
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Mute Jar ${{ github.ref_name }}'
-          releaseBody: 'Single-file desktop installers for Windows (.exe / .msi), macOS (Universal .dmg), and Linux (.AppImage / .deb). No Node.js or Docker required.'
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+          name: installers-${{ matrix.os_folder }}
+          path: installers/${{ matrix.os_folder }}/
+          if-no-files-found: error
+
+  collect-and-release:
+    name: Bundle All OS Folders & Publish Tag Release
+    needs: build-installers
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download macOS installers
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-macos
+          path: installers/macos
+
+      - name: Download Windows installers
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-windows
+          path: installers/windows
+
+      - name: Download Linux installers
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-linux
+          path: installers/linux
+
+      - name: List combined installers directory
+        run: find installers -maxdepth 2 -type f -ls
+
+      - name: Upload combined multi-OS installers bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutejar-installers-all-os
+          path: installers/
+
+      - name: Publish GitHub Release on version tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Mute Jar ${{ github.ref_name }}
+          body: |
+            Single-file desktop installers for every operating system:
+            - **macOS**: Universal `.dmg` (Apple Silicon & Intel)
+            - **Windows**: `.exe` (NSIS) and `.msi`
+            - **Linux**: `.AppImage` and `.deb`
+
+            No Node.js or Docker required.
+          files: |
+            installers/macos/*.dmg
+            installers/windows/*.exe
+            installers/windows/*.msi
+            installers/linux/*.AppImage
+            installers/linux/*.deb

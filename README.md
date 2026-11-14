@@ -193,11 +193,11 @@ npm run desktop:icons
 # 2. Launch live Tauri desktop window during development
 npm run desktop:dev
 
-# 3. Build single-file installers into src-tauri/target/release/bundle/
-npm run desktop:build
+# 3. Build single-file installers into src-tauri/target/release/bundle/ and organize into installers/<os>/
+npm run desktop:build && node scripts/stage-installers.mjs
 ```
 
-Pushing a version tag (e.g., `git tag v0.1.0 && git push origin v0.1.0`) triggers `.github/workflows/release-desktop.yml` to compile and upload Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) artifacts to a draft GitHub Release automatically.
+Every commit pushed to GitHub automatically triggers `.github/workflows/release-desktop.yml`, which compiles Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) installers and uploads them organized into `installers/macos/`, `installers/windows/`, `installers/linux/`, and `installers/chromeos/` as downloadable workflow artifacts (`mutejar-installers-all-os`). Pushing a `v*` tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`) also attaches those installers to a draft **GitHub Release**.
 
 ---
 
