@@ -1,0 +1,5 @@
+65c36daed55c32a8af5af9ea678273f51c193f8dffa32c595317f77d2e87fa95  macos/Mute Jar_1.0.0_universal.dmg
+c7e33bbc302fbf528fea8a450df0e4ac7735285526b524f2282e0d4ed029c131  windows/Mute Jar_1.0.0_x64_en-US.msi
+46cfe3f66e972a4bc5c9d4d9dbaf4bcdaf63e956883dfd94157dd91f649c4bd7  windows/Mute Jar_1.0.0_x64-setup.exe
+3ed95aaf6e5301f2ce2d0f058f30da167dea7953ec7aa4b6516a040da0b6b605  linux/Mute Jar_1.0.0_amd64.AppImage
+d9ed0d7024f10af130a788457acf04a7b78c1a88f26241ee89d8a1fb8272b5ac  linux/Mute Jar_1.0.0_amd64.deb
