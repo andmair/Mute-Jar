@@ -135,6 +135,357 @@ function getFallbackSuggestions(persona: string, count: number, category: string
   return all;
 }
 
+// -------------------------------------------------------------
+// Local Model Context Protocol (MCP) Server State & Endpoints
+// Exposes read-only local resources & tools for Claude Desktop / Cursor
+// -------------------------------------------------------------
+const mcpLocalState = {
+  stats: {
+    totalCycleCoins: 0,
+    totalMeetings: 0,
+    persona: 'pragmatist',
+    streakDays: 3,
+    lastMuteAt: Date.now(),
+  },
+  events: [] as Array<{
+    timestamp: number;
+    coinCount: number;
+    durationSeconds: number;
+    detectedMethod: string;
+  }>,
+  pledges: [] as Array<{
+    title: string;
+    description: string;
+    status: string;
+    type: string;
+    coinsCommitted: number;
+    actionMetric: string;
+  }>,
+};
+
+// Client syncs non-sensitive state into local MCP server RAM
+app.post('/api/mcp/sync-state', (req, res) => {
+  const { stats, events, pledges } = req.body || {};
+  if (stats) {
+    mcpLocalState.stats = {
+      totalCycleCoins: Number(stats.totalCycleCoins) || 0,
+      totalMeetings: Number(stats.totalMeetings) || 0,
+      persona: String(stats.persona || 'pragmatist'),
+      streakDays: Number(stats.streakDays) || 0,
+      lastMuteAt: stats.lastMuteAt || Date.now(),
+    };
+  }
+  if (Array.isArray(events)) {
+    // Strictly omit any meeting titles or private data
+    mcpLocalState.events = events.slice(0, 50).map((e: any) => ({
+      timestamp: Number(e.timestamp) || Date.now(),
+      coinCount: 1,
+      durationSeconds: Number(e.durationSeconds) || 0,
+      detectedMethod: String(e.detectedMethod || 'auto_audio'),
+    }));
+  }
+  if (Array.isArray(pledges)) {
+    mcpLocalState.pledges = pledges.slice(0, 30).map((p: any) => ({
+      title: String(p.title || ''),
+      description: String(p.description || ''),
+      status: String(p.status || 'pending'),
+      type: String(p.type || 'pledge'),
+      coinsCommitted: Number(p.coinsCommitted) || 0,
+      actionMetric: String(p.estimatedValue || p.actionMetric || ''),
+    }));
+  }
+  res.json({ ok: true, syncedAt: Date.now() });
+});
+
+// MCP Server Information & Exploration
+app.get('/api/mcp', (_req, res) => {
+  res.json({
+    name: 'mutejar-local-mcp',
+    version: '1.0.0',
+    protocolVersion: '2024-11-05',
+    status: 'running',
+    description: 'Local Model Context Protocol (MCP) data server for Mute Jar habit logs and goals',
+    capabilities: {
+      resources: ['mutejar://stats', 'mutejar://events', 'mutejar://pledges'],
+      tools: ['get_mute_stats', 'list_pledges', 'suggest_pledge_action'],
+    },
+    privacy: 'Strict On-Device Only. Meeting titles and audio streams are never stored or exposed.',
+  });
+});
+
+// MCP JSON-RPC 2.0 Handler
+app.post('/api/mcp', async (req, res) => {
+  const { jsonrpc, id, method, params } = req.body || {};
+
+  if (jsonrpc !== '2.0') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      id: id ?? null,
+      error: { code: -32600, message: 'Invalid Request: jsonrpc must be "2.0"' },
+    });
+  }
+
+  switch (method) {
+    case 'initialize':
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        result: {
+          protocolVersion: '2024-11-05',
+          serverInfo: {
+            name: 'mutejar-local-mcp',
+            version: '1.0.0',
+          },
+          capabilities: {
+            resources: {},
+            tools: {},
+          },
+        },
+      });
+
+    case 'notifications/initialized':
+      return res.status(204).end();
+
+    case 'resources/list':
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        result: {
+          resources: [
+            {
+              uri: 'mutejar://stats',
+              name: 'Mute Jar Cycle Statistics',
+              description: 'Aggregated Mutecoin counts, streak, and persona configuration for the current cycle',
+              mimeType: 'application/json',
+            },
+            {
+              uri: 'mutejar://events',
+              name: 'Sanitized Mute Incident Log',
+              description: 'Recent mute events with timestamps and duration (meeting titles strictly redacted)',
+              mimeType: 'application/json',
+            },
+            {
+              uri: 'mutejar://pledges',
+              name: 'Pledges & Goals',
+              description: 'Active and completed charitable, personal, and team pledges',
+              mimeType: 'application/json',
+            },
+          ],
+        },
+      });
+
+    case 'resources/read': {
+      const uri = params?.uri;
+      if (uri === 'mutejar://stats') {
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: JSON.stringify(mcpLocalState.stats, null, 2),
+              },
+            ],
+          },
+        });
+      }
+      if (uri === 'mutejar://events') {
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: JSON.stringify(mcpLocalState.events, null, 2),
+              },
+            ],
+          },
+        });
+      }
+      if (uri === 'mutejar://pledges') {
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: JSON.stringify(mcpLocalState.pledges, null, 2),
+              },
+            ],
+          },
+        });
+      }
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        error: { code: -32602, message: `Resource not found: ${uri}` },
+      });
+    }
+
+    case 'tools/list':
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        result: {
+          tools: [
+            {
+              name: 'get_mute_stats',
+              description: 'Get current cycle Mutecoin tallies, meeting totals, and habit streak',
+              inputSchema: {
+                type: 'object',
+                properties: {},
+              },
+            },
+            {
+              name: 'list_pledges',
+              description: 'List active and completed pledges, charity donations, or fitness goals',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  status: {
+                    type: 'string',
+                    enum: ['all', 'pending', 'completed'],
+                    description: 'Filter pledges by status',
+                  },
+                },
+              },
+            },
+            {
+              name: 'suggest_pledge_action',
+              description: 'Generate creative, constructive pledge ideas based on Mutecoin totals',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  persona: {
+                    type: 'string',
+                    enum: ['saint', 'pragmatist', 'roastmaster'],
+                  },
+                  coinCount: {
+                    type: 'number',
+                  },
+                },
+                required: ['coinCount'],
+              },
+            },
+          ],
+        },
+      });
+
+    case 'tools/call': {
+      const toolName = params?.name;
+      const toolArgs = params?.arguments || {};
+
+      if (toolName === 'get_mute_stats') {
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(mcpLocalState.stats, null, 2),
+              },
+            ],
+          },
+        });
+      }
+
+      if (toolName === 'list_pledges') {
+        const filter = toolArgs.status || 'all';
+        const filtered =
+          filter === 'all'
+            ? mcpLocalState.pledges
+            : mcpLocalState.pledges.filter((p) => p.status === filter);
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(filtered, null, 2),
+              },
+            ],
+          },
+        });
+      }
+
+      if (toolName === 'suggest_pledge_action') {
+        const persona = toolArgs.persona || mcpLocalState.stats.persona;
+        const count = toolArgs.coinCount || mcpLocalState.stats.totalCycleCoins || 5;
+        const suggestions = getFallbackSuggestions(persona, count, 'all');
+        return res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(suggestions, null, 2),
+              },
+            ],
+          },
+        });
+      }
+
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        error: { code: -32601, message: `Tool not found: ${toolName}` },
+      });
+    }
+
+    default:
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        error: { code: -32601, message: `Method not found: ${method}` },
+      });
+  }
+});
+
+// Webhook Relay fallback for browsers enforcing strict CORS on external webhooks
+app.post('/api/integrations/relay-webhook', async (req, res) => {
+  const { webhookUrl, payload } = req.body || {};
+  if (!webhookUrl || typeof webhookUrl !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid webhookUrl' });
+  }
+
+  try {
+    const parsed = new URL(webhookUrl);
+    if (!['https:', 'http:'].includes(parsed.protocol)) {
+      return res.status(400).json({ error: 'Invalid URL protocol' });
+    }
+
+    // Forward outbound webhook from server
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text().catch(() => '');
+    if (!response.ok && response.status !== 200 && response.status !== 204) {
+      return res.status(response.status).json({
+        error: `Webhook returned status ${response.status}: ${text}`,
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
+  }
+});
+
 // Dev vs Production server handling
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';

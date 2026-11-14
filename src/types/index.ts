@@ -14,6 +14,7 @@ export interface MuteRecord {
   undone: boolean;
   monthKey: string; // 'YYYY-MM'
   detectedMethod: 'auto_audio' | 'manual';
+  notes?: string;
 }
 
 export interface MonthStats {
@@ -123,6 +124,32 @@ export interface UserSettings {
   activeTargetTitle?: string;
   activeTargetDescription?: string;
   theme: 'light' | 'dark' | 'system';
+  calendarSources?: CalendarSource[];
+  autoTagMeetings?: boolean;
+}
+
+export type CalendarProvider = 'google' | 'microsoft' | 'apple' | 'custom_feed';
+export type CalendarConnectionType = 'oauth' | 'webcal_feed';
+
+export interface CalendarEventBlock {
+  id: string;
+  title: string;
+  startTime: string; // '09:30'
+  endTime: string; // '10:00'
+  dayOfWeek?: number; // 0 = Sunday, 1 = Monday, etc.
+}
+
+export interface CalendarSource {
+  id: string;
+  name: string;
+  provider: CalendarProvider;
+  connectionType: CalendarConnectionType;
+  feedUrl?: string;
+  oauthEmail?: string;
+  isPrimary: boolean;
+  enabled: boolean;
+  lastSyncedAt?: number;
+  events: CalendarEventBlock[];
 }
 
 export interface ScheduledMeeting {
@@ -131,4 +158,37 @@ export interface ScheduledMeeting {
   dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
   startTime: string; // '09:30'
   endTime: string; // '10:00'
+}
+
+export type ChatPlatform = 'slack' | 'discord' | 'teams';
+
+export interface ChatChannel {
+  id: string;
+  name: string; // e.g. "#team-standup"
+  platform: ChatPlatform;
+  webhookUrl: string;
+  createdAt: number;
+  lastTestedAt?: number;
+  verified: boolean;
+}
+
+export type PublishableEventType =
+  | 'mute_deposit' // A single mute event
+  | 'milestone_reach' // Reached milestone (5, 10, 20 Mutecoins)
+  | 'goal_completed' // Fulfilled a charity or personal pledge
+  | 'cycle_summary'; // End-of-cycle review summary
+
+export interface ChannelPublishRule {
+  id: string;
+  eventType: PublishableEventType;
+  channelId: string; // Exactly 1 target channel per rule
+  enabled: boolean;
+  includeRoastQuote?: boolean; // Optional playful persona quip
+}
+
+export interface IntegrationsConfig {
+  channels: ChatChannel[];
+  rules: ChannelPublishRule[];
+  mcpEnabled: boolean;
+  privacyStrictRedaction: boolean; // Always true
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMuteJar } from '../context/MuteJarContext';
 import {
   User,
@@ -8,6 +8,9 @@ import {
   Zap,
   Heart,
   Crown,
+  Upload,
+  Camera,
+  Trash2,
 } from 'lucide-react';
 
 export const AVATAR_OPTIONS = [
@@ -25,10 +28,74 @@ export const AVATAR_OPTIONS = [
   { id: 'rocket', emoji: '🚀', label: 'Velocity', bg: 'bg-blue-100 dark:bg-blue-950/70 border-blue-400' },
 ];
 
+export const isCustomPhotoAvatar = (avatar?: string): boolean => {
+  return typeof avatar === 'string' && avatar.startsWith('data:image/');
+};
+
 export const getAvatarEmoji = (id?: string) => {
   const found = AVATAR_OPTIONS.find((a) => a.id === id);
   return found ? found.emoji : '🧑‍🚀';
 };
+
+export const UserAvatar: React.FC<{
+  avatar?: string;
+  alt?: string;
+  imgClassName?: string;
+  emojiClassName?: string;
+}> = ({ avatar, alt = 'User avatar', imgClassName = 'w-full h-full object-cover', emojiClassName = '' }) => {
+  if (isCustomPhotoAvatar(avatar)) {
+    return <img src={avatar} alt={alt} className={imgClassName} />;
+  }
+  return <span className={emojiClassName}>{getAvatarEmoji(avatar)}</span>;
+};
+
+/**
+ * Resize and center-crop an uploaded image file to a lightweight 192x192 JPEG data URL
+ * so custom avatars persist reliably in localStorage without exceeding storage quotas.
+ */
+function resizeAvatarImage(file: File, targetSize = 192): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      reject(new Error('Please upload a PNG, JPG, WebP, or GIF image.'));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error('Image must be smaller than 10 MB.'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the selected image file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Unsupported or corrupted image file.'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context unavailable.'));
+          return;
+        }
+
+        // Fill neutral background in case source PNG/GIF has transparency
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, targetSize, targetSize);
+
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize);
+        resolve(canvas.toDataURL('image/jpeg', 0.86));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export const UserProfileModal: React.FC<{
   isOpen: boolean;
@@ -39,8 +106,37 @@ export const UserProfileModal: React.FC<{
   const [nameInput, setNameInput] = useState(settings.userName || '');
   const [selectedAvatar, setSelectedAvatar] = useState(settings.userAvatar || 'astronaut');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setNameInput(settings.userName || '');
+      setSelectedAvatar(settings.userAvatar || 'astronaut');
+      setUploadError(null);
+    }
+  }, [isOpen, settings.userName, settings.userAvatar]);
 
   if (!isOpen) return null;
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Allow selecting the same file again
+    e.target.value = '';
+    if (!file) return;
+
+    setUploadError(null);
+    setIsProcessingPhoto(true);
+    try {
+      const dataUrl = await resizeAvatarImage(file, 192);
+      setSelectedAvatar(dataUrl);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to process image.');
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
 
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -56,6 +152,7 @@ export const UserProfileModal: React.FC<{
   };
 
   const totalAllTimeMutes = mutes.filter((m) => !m.undone).length;
+  const hasCustomPhoto = isCustomPhotoAvatar(selectedAvatar);
 
   return (
     <div
@@ -76,7 +173,7 @@ export const UserProfileModal: React.FC<{
                 User Profile
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-300">
-                Personalize your name and avatar displayed on the dashboard
+                Personalize your name, photo, or avatar on the dashboard
               </p>
             </div>
           </div>
@@ -94,9 +191,18 @@ export const UserProfileModal: React.FC<{
         <form onSubmit={handleSave} className="p-6 overflow-y-auto space-y-5 text-xs flex-1">
           {/* Active Avatar Preview Card */}
           <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-300 dark:border-amber-700/50 flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 shadow-md border-2 border-amber-400 flex items-center justify-center text-3xl shrink-0">
-              {getAvatarEmoji(selectedAvatar)}
-            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 shadow-md border-2 border-amber-400 flex items-center justify-center text-3xl shrink-0 overflow-hidden cursor-pointer"
+              title="Upload custom photo"
+              aria-label="Upload custom profile photo"
+            >
+              <UserAvatar avatar={selectedAvatar} alt="Selected avatar preview" />
+              <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                <Camera className="w-5 h-5" />
+              </div>
+            </button>
             <div className="flex-1 min-w-0">
               <div className="font-extrabold text-slate-900 dark:text-white text-base truncate">
                 {nameInput.trim() || 'Your Profile'}
@@ -104,7 +210,7 @@ export const UserProfileModal: React.FC<{
               <p className="text-slate-600 dark:text-slate-300 text-xs mt-0.5">
                 {nameInput.trim() ? 'Personalized Mute Jar Profile' : 'No display name set (using neutral profile)'}
               </p>
-              <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 capitalize flex items-center gap-1">
                   {settings.persona === 'saint' ? <Heart className="w-2.5 h-2.5" aria-hidden="true" /> : settings.persona === 'roastmaster' ? <Crown className="w-2.5 h-2.5" aria-hidden="true" /> : <Zap className="w-2.5 h-2.5" aria-hidden="true" />}
                   <span>{settings.persona}</span>
@@ -188,10 +294,63 @@ export const UserProfileModal: React.FC<{
             </div>
           </div>
 
-          {/* Avatar Selector Grid */}
+          {/* Custom Photo Upload */}
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="font-bold text-slate-900 dark:text-white text-xs">
+                  Custom Photo or Avatar
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Stored locally in your browser · PNG, JPG, WebP, or GIF
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {hasCustomPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAvatar('astronaut')}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
+                    title="Remove custom photo and revert to built-in avatar"
+                    aria-label="Remove custom photo"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={isProcessingPhoto}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[11px] hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isProcessingPhoto ? 'Processing...' : hasCustomPhoto ? 'Change Photo' : 'Upload Photo'}</span>
+                </button>
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              aria-label="Upload custom avatar image file"
+            />
+
+            {uploadError && (
+              <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                {uploadError}
+              </p>
+            )}
+          </div>
+
+          {/* Built-In Avatar Selector Grid */}
           <fieldset>
             <legend className="block text-xs font-bold text-slate-900 dark:text-white mb-2">
-              Select Avatar
+              Or Choose a Built-in Avatar
             </legend>
             <div className="grid grid-cols-4 gap-2.5">
               {AVATAR_OPTIONS.map((avatar) => {
@@ -200,7 +359,10 @@ export const UserProfileModal: React.FC<{
                   <button
                     key={avatar.id}
                     type="button"
-                    onClick={() => setSelectedAvatar(avatar.id)}
+                    onClick={() => {
+                      setSelectedAvatar(avatar.id);
+                      setUploadError(null);
+                    }}
                     aria-pressed={isSelected}
                     aria-label={`Select avatar ${avatar.label}`}
                     className={`p-2.5 rounded-2xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer relative focus-visible:ring-2 focus-visible:ring-amber-500 ${
@@ -264,3 +426,4 @@ export const UserProfileModal: React.FC<{
     </div>
   );
 };
+

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMuteJar } from '../context/MuteJarContext';
-import { PersonaType, CycleFrequency } from '../types';
+import { PersonaType, CycleFrequency, CalendarProvider, CalendarConnectionType } from '../types';
 import { PersonaChangePromptModal } from './PersonaChangePromptModal';
 import {
   Settings,
@@ -26,6 +26,12 @@ import {
   Moon,
   BellOff,
   Play,
+  MessageSquare,
+  Apple,
+  Plus,
+  Star,
+  Link2,
+  KeyRound,
 } from 'lucide-react';
 import { POPULAR_CURRENCIES, detectLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
 import { getCurrentBuildId, purgeAllLocalCacheNow } from '../utils/buildCacheManager';
@@ -36,12 +42,15 @@ export const SettingsModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onOpenBackgroundGuide?: () => void;
-}> = ({ isOpen, onClose, onOpenBackgroundGuide }) => {
+  onOpenIntegrations?: () => void;
+  onOpenSetup?: (tab?: 'desktop' | 'chat' | 'mcp' | 'packaging') => void;
+}> = ({ isOpen, onClose, onOpenBackgroundGuide, onOpenIntegrations, onOpenSetup }) => {
   const {
     settings,
     updateSettings,
     formatCurrency,
     deleteUserProfileAndWipeAllData,
+    resetToGenericTestProfile,
     calibrateRoomNoise,
     audioState,
     toggleDoNotDisturb,
@@ -51,12 +60,94 @@ export const SettingsModal: React.FC<{
     requestPersonaChange,
     confirmPersonaChange,
     cancelPendingPersonaChange,
+    addCalendarSource,
+    updateCalendarSource,
+    removeCalendarSource,
+    setPrimaryCalendar,
   } = useMuteJar();
   const [showWipeDialog, setShowWipeDialog] = React.useState(false);
   const [wipeConfirmWord, setWipeConfirmWord] = React.useState('');
   const [calibratedNotice, setCalibratedNotice] = React.useState<string | null>(null);
   const [promptPersona, setPromptPersona] = React.useState<PersonaType | null>(null);
   const [showPromptModal, setShowPromptModal] = React.useState(false);
+
+  // Multi-calendar Settings form state (max 3)
+  const [showAddCalendar, setShowAddCalendar] = React.useState(false);
+  const [calProvider, setCalProvider] = React.useState<CalendarProvider>('google');
+  const [calConnectionType, setCalConnectionType] = React.useState<CalendarConnectionType>('oauth');
+  const [calName, setCalName] = React.useState('');
+  const [calEmail, setCalEmail] = React.useState('');
+  const [calFeedUrl, setCalFeedUrl] = React.useState('');
+  const [calSetPrimary, setCalSetPrimary] = React.useState(false);
+  const [calFormError, setCalFormError] = React.useState<string | null>(null);
+
+  const calendarSources = settings.calendarSources || [];
+
+  const handleSelectProvider = (provider: CalendarProvider) => {
+    setCalProvider(provider);
+    setCalFormError(null);
+    if (provider === 'apple' || provider === 'custom_feed') {
+      setCalConnectionType('webcal_feed');
+    } else {
+      setCalConnectionType('oauth');
+    }
+    const defaultLabels: Record<CalendarProvider, string> = {
+      google: 'Google Calendar',
+      microsoft: 'Microsoft 365 Work',
+      apple: 'Apple iCloud Personal',
+      custom_feed: 'Corporate .ICS Feed',
+    };
+    setCalName(defaultLabels[provider]);
+  };
+
+  const handleAddCalendarSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCalFormError(null);
+    if (calendarSources.length >= 3) {
+      setCalFormError('Maximum of 3 connected calendars reached.');
+      return;
+    }
+    const trimmedName = calName.trim();
+    if (!trimmedName) {
+      setCalFormError('Please enter a label for this calendar.');
+      return;
+    }
+    if (calConnectionType === 'oauth') {
+      if (!calEmail.trim() || !calEmail.includes('@')) {
+        setCalFormError('Please enter a valid account email for OAuth sign-in.');
+        return;
+      }
+    } else {
+      const url = calFeedUrl.trim();
+      if (!/^https?:\/\/|^webcal:\/\//i.test(url)) {
+        setCalFormError('Feed URL must start with https://, http://, or webcal://');
+        return;
+      }
+    }
+
+    const ok = addCalendarSource({
+      name: trimmedName,
+      provider: calProvider,
+      connectionType: calConnectionType,
+      oauthEmail: calConnectionType === 'oauth' ? calEmail.trim() : undefined,
+      feedUrl: calConnectionType === 'webcal_feed' ? calFeedUrl.trim() : undefined,
+      isPrimary: calendarSources.length === 0 ? true : calSetPrimary,
+      enabled: true,
+      lastSyncedAt: Date.now(),
+      events: [],
+    });
+
+    if (ok) {
+      setShowAddCalendar(false);
+      setCalName('');
+      setCalEmail('');
+      setCalFeedUrl('');
+      setCalSetPrimary(false);
+      setCalFormError(null);
+    } else {
+      setCalFormError('Maximum of 3 connected calendars reached.');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -671,18 +762,392 @@ export const SettingsModal: React.FC<{
               />
             </label>
 
-            {onOpenBackgroundGuide && (
+            {(onOpenSetup || onOpenBackgroundGuide) && (
               <div className="pt-2 flex justify-end">
                 <button
                   onClick={() => {
                     onClose();
-                    onOpenBackgroundGuide();
+                    if (onOpenSetup) {
+                      onOpenSetup('desktop');
+                    } else if (onOpenBackgroundGuide) {
+                      onOpenBackgroundGuide();
+                    }
                   }}
                   className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 hover:bg-sky-50 transition-colors shrink-0 cursor-pointer"
                 >
                   View OS Distribution, Tray &amp; Autostart Guide →
                 </button>
               </div>
+            )}
+          </div>
+
+          {/* Calendar Connections & Auto-Tagging (Settings Only) */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-indigo-500 shrink-0" />
+                <span className="font-bold text-slate-900 dark:text-white text-xs">
+                  Calendar Connections &amp; Auto-Tagging
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 font-bold">
+                {calendarSources.length} / 3 Connected
+              </span>
+            </div>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer select-none">
+              <div className="space-y-0.5">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">
+                  Auto-tag mute logs from active calendar meetings
+                </span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                  Copies the highest-priority meeting title into your log at mute time (Primary wins double bookings). Logs are separate and editable; unscheduled mutes label as &ldquo;Unscheduled meeting - mute #&rdquo;.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.autoTagMeetings !== false}
+                onChange={(e) => updateSettings({ autoTagMeetings: e.target.checked })}
+                className="mt-1 w-4 h-4 accent-indigo-600 rounded cursor-pointer shrink-0"
+              />
+            </label>
+
+            {/* Connected Calendars List (Max 3) */}
+            <div className="space-y-2 pt-1">
+              {calendarSources.length === 0 ? (
+                <div className="p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-[11px] text-slate-500 dark:text-slate-400">
+                  No calendars connected. Mutes will automatically log as &ldquo;Unscheduled meeting - mute #&rdquo; and can be renamed in the Ledger.
+                </div>
+              ) : (
+                calendarSources.map((cal) => {
+                  const providerLabels: Record<CalendarProvider, string> = {
+                    google: 'Google',
+                    microsoft: 'Microsoft 365',
+                    apple: 'Apple iCloud',
+                    custom_feed: 'Custom .ICS',
+                  };
+                  return (
+                    <div
+                      key={cal.id}
+                      className={`p-3 rounded-xl border transition-colors ${
+                        cal.isPrimary
+                          ? 'bg-white dark:bg-slate-900 border-amber-400/80 dark:border-amber-600/70 shadow-2xs'
+                          : 'bg-white/70 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700/80'
+                      } ${!cal.enabled ? 'opacity-60' : ''}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                              {cal.name}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              · {providerLabels[cal.provider]} · {cal.connectionType === 'oauth' ? 'OAuth' : 'Webcal / .ICS'}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {cal.connectionType === 'oauth'
+                              ? cal.oauthEmail || 'Connected via OAuth'
+                              : cal.feedUrl || 'Private subscription feed'}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPrimaryCalendar(cal.id)}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer ${
+                              cal.isPrimary
+                                ? 'bg-amber-500 text-slate-950 shadow-2xs'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-500/20'
+                            }`}
+                            title="Primary calendar takes priority when meetings overlap"
+                          >
+                            <Star className={`w-3 h-3 ${cal.isPrimary ? 'fill-slate-950' : ''}`} />
+                            <span>{cal.isPrimary ? 'Primary' : 'Set Primary'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => updateCalendarSource(cal.id, { lastSyncedAt: Date.now() })}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Refresh calendar sync"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => removeCalendarSource(cal.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                            title="Disconnect calendar"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={cal.enabled}
+                            onChange={(e) => updateCalendarSource(cal.id, { enabled: e.target.checked })}
+                            className="w-3.5 h-3.5 accent-indigo-600 rounded cursor-pointer"
+                          />
+                          <span>{cal.enabled ? 'Active for auto-tagging' : 'Paused'}</span>
+                        </label>
+                        <span>
+                          {cal.lastSyncedAt
+                            ? `Synced ${new Date(cal.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                            : 'Ready'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Add Calendar Action or Form */}
+            {calendarSources.length >= 3 ? (
+              <div className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl px-3 py-2">
+                Maximum of 3 calendars connected. Disconnect one above if you need to swap accounts.
+              </div>
+            ) : !showAddCalendar ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCalendar(true);
+                  handleSelectProvider('google');
+                }}
+                className="w-full py-2 px-3 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Calendar Connection ({calendarSources.length}/3)</span>
+              </button>
+            ) : (
+              <form
+                onSubmit={handleAddCalendarSubmit}
+                className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white text-xs">
+                    Connect New Calendar
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddCalendar(false);
+                      setCalFormError(null);
+                    }}
+                    className="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Provider Selector */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { id: 'google' as CalendarProvider, label: 'Google' },
+                    { id: 'microsoft' as CalendarProvider, label: 'Microsoft 365' },
+                    { id: 'apple' as CalendarProvider, label: 'Apple iCloud' },
+                    { id: 'custom_feed' as CalendarProvider, label: 'Other / .ICS' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleSelectProvider(p.id)}
+                      className={`py-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
+                        calProvider === p.id
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Connection Method Toggle (OAuth vs Webcal/.ICS) */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block">
+                    Connection Method
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={calProvider === 'apple' || calProvider === 'custom_feed'}
+                      onClick={() => setCalConnectionType('oauth')}
+                      className={`p-2 rounded-lg border text-left transition-all ${
+                        calProvider === 'apple' || calProvider === 'custom_feed'
+                          ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-800'
+                          : calConnectionType === 'oauth'
+                          ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30 cursor-pointer'
+                          : 'border-slate-200 dark:border-slate-700 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-[11px] text-slate-900 dark:text-white">
+                        <KeyRound className="w-3 h-3 text-indigo-500" />
+                        <span>1-Click OAuth</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {calProvider === 'apple' || calProvider === 'custom_feed'
+                          ? 'Use Webcal for Apple/Custom'
+                          : 'Standard sign-in'}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCalConnectionType('webcal_feed')}
+                      className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                        calConnectionType === 'webcal_feed'
+                          ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30'
+                          : 'border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-[11px] text-slate-900 dark:text-white">
+                        <Link2 className="w-3 h-3 text-indigo-500" />
+                        <span>Private Webcal / .ICS</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        Bypasses IT OAuth blocks
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Label & Credentials/Feed */}
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[11px] text-slate-500 block mb-1">
+                      Calendar Label
+                    </label>
+                    <input
+                      type="text"
+                      value={calName}
+                      onChange={(e) => setCalName(e.target.value)}
+                      placeholder="e.g. Corporate Outlook or Personal iCloud"
+                      className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  {calConnectionType === 'oauth' ? (
+                    <div>
+                      <label className="text-[11px] text-slate-500 block mb-1">
+                        Account Email
+                      </label>
+                      <input
+                        type="email"
+                        value={calEmail}
+                        onChange={(e) => setCalEmail(e.target.value)}
+                        placeholder={calProvider === 'microsoft' ? 'name@company.com' : 'name@gmail.com'}
+                        className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-[11px] text-slate-500 block mb-1">
+                        Secret .ICS / Webcal Feed URL
+                      </label>
+                      <input
+                        type="text"
+                        value={calFeedUrl}
+                        onChange={(e) => setCalFeedUrl(e.target.value)}
+                        placeholder="https://... or webcal://p12-caldav.icloud.com/..."
+                        className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  )}
+
+                  {calendarSources.length > 0 && (
+                    <label className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={calSetPrimary}
+                        onChange={(e) => setCalSetPrimary(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer"
+                      />
+                      <span>Set as Primary calendar (wins priority on double bookings)</span>
+                    </label>
+                  )}
+                </div>
+
+                {calFormError && (
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">
+                    {calFormError}
+                  </p>
+                )}
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="submit"
+                    className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs cursor-pointer"
+                  >
+                    {calConnectionType === 'oauth' ? 'Connect Calendar Account' : 'Save Subscription Feed'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* Team Chat & Local MCP Integrations */}
+          <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="font-bold text-slate-900 dark:text-white text-xs">
+                  Team Chat &amp; Local MCP AI Integrations
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 text-[11px]">
+                  Publish Mutecoin events to Slack, Discord, or Teams, and connect Claude Desktop / Cursor via Local MCP.
+                </p>
+              </div>
+            </div>
+            {(onOpenSetup || onOpenIntegrations) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenSetup) {
+                    onOpenSetup('chat');
+                  } else if (onOpenIntegrations) {
+                    onOpenIntegrations();
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shrink-0 cursor-pointer"
+              >
+                Configure →
+              </button>
+            )}
+          </div>
+
+          {/* Native Mac App Store & Packaging Guide */}
+          <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Apple className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="font-bold text-slate-900 dark:text-white text-xs">
+                  Mac App Store &amp; Packaging Guide
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 text-[11px]">
+                  Compare Swift vs PWA vs Electron footprints and wrap Mute Jar in Xcode WKWebView.
+                </p>
+              </div>
+            </div>
+            {onOpenSetup && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenSetup('packaging');
+                }}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors shrink-0 cursor-pointer"
+              >
+                View Guide →
+              </button>
             )}
           </div>
 
@@ -713,22 +1178,37 @@ export const SettingsModal: React.FC<{
             <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
               <strong className="text-slate-900 dark:text-white">Persistent user data active:</strong> Your settings, goals, mute events, and profile are saved locally in <code className="font-mono text-[10px] bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code> and remain permanently preserved across closing the app, restarting, or updating builds. User data is only purged when you explicitly choose to delete your profile below.
             </p>
-            <div className="pt-1 flex items-center justify-between gap-3">
+            <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
               <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                Need to purge temporary asset caches?
+                Reset sample data or clear temporary caches:
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('Refresh asset caches and reload the app? (Your profile and mute history will be kept)')) {
-                    purgeAllLocalCacheNow();
-                  }
-                }}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Refresh Cache</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Clean up current data and reset to the generic test profile with sample data?')) {
+                      resetToGenericTestProfile();
+                      onClose();
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Reset to Test Profile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Refresh asset caches and reload the app? (Your profile and mute history will be kept)')) {
+                      purgeAllLocalCacheNow();
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh Cache</span>
+                </button>
+              </div>
             </div>
           </div>
 

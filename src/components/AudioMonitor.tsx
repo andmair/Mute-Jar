@@ -30,9 +30,7 @@ import {
   Command,
 } from 'lucide-react';
 
-export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
-  onOpenCalendarModal,
-}) => {
+export const AudioMonitor: React.FC = () => {
   const {
     settings,
     updateSettings,
@@ -48,8 +46,8 @@ export const AudioMonitor: React.FC<{ onOpenCalendarModal: () => void }> = ({
     undoMuteCoin,
   } = useMuteJar();
 
-  const [showControls, setShowControls] = useState(true);
-  const [showSettingsDrawer, setShowSettingsDrawer] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [micPermissionError, setMicPermissionError] = useState(false);
   const [calibrationSuccessMessage, setCalibrationSuccessMessage] = useState<string | null>(null);

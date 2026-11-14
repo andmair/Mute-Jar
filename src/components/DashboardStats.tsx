@@ -14,6 +14,9 @@ import {
   ShieldCheck,
   Trash2,
   ChevronDown,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 
 export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
@@ -28,6 +31,7 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
     mutes,
     settings,
     undoMuteCoin,
+    updateMuteRecord,
     formatCurrency,
     clearSampleMutes,
     finalizeSetup,
@@ -37,6 +41,9 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>(currentMonthKey);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [editingNotes, setEditingNotes] = useState('');
 
   // Filter mutes for ledger
   const currentMonthMutes = mutes.filter((m) => {
@@ -262,7 +269,74 @@ export const DashboardStats: React.FC<{ onOpenReviewModal: () => void }> = ({
                       </td>
 
                       <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">
-                        {record.meetingTitle}
+                        {editingRecordId === record.id ? (
+                          <div className="space-y-1.5 max-w-xs">
+                            <input
+                              type="text"
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              placeholder="Meeting title / context"
+                              className="w-full text-xs px-2 py-1 rounded-md border border-amber-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                              autoFocus
+                            />
+                            <input
+                              type="text"
+                              value={editingNotes}
+                              onChange={(e) => setEditingNotes(e.target.value)}
+                              placeholder="Add optional notes / description..."
+                              className="w-full text-[11px] px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                            />
+                            <div className="flex items-center gap-1.5 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (editingTitle.trim()) {
+                                    updateMuteRecord(record.id, {
+                                      meetingTitle: editingTitle.trim(),
+                                      notes: editingNotes.trim() || undefined,
+                                    });
+                                  }
+                                  setEditingRecordId(null);
+                                }}
+                                className="px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-slate-950 rounded hover:bg-amber-600 flex items-center gap-1 cursor-pointer"
+                              >
+                                <Check className="w-3 h-3" /> Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingRecordId(null)}
+                                className="px-2 py-0.5 text-[10px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1 cursor-pointer"
+                              >
+                                <X className="w-3 h-3" /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="group flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span>{record.meetingTitle}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingRecordId(record.id);
+                                    setEditingTitle(record.meetingTitle);
+                                    setEditingNotes(record.notes || '');
+                                  }}
+                                  className="opacity-40 sm:opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-amber-600 transition-opacity rounded cursor-pointer"
+                                  title="Edit meeting title / notes fallback"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                              </div>
+                              {record.notes && (
+                                <p className="text-[10px] text-slate-400 font-normal mt-0.5 italic">
+                                  {record.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">

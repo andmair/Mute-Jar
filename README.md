@@ -1,212 +1,226 @@
-# 🎙️ Mute Jar
+# Mute Jar
 
-> **A privacy-first meeting companion that automatically detects when you speak while muted, drops cartoon MuteCoins into your jar, and turns awkward slip-ups into charitable giving, personal habits, or team fun.**
-
----
-
-## 🌟 Overview
-
-We’ve all said it: *"Sorry, I was on mute!"*
-
-**Mute Jar** turns this everyday remote-work blunder into something positive, humorous, and accountable. Powered by real-time client-side audio analysis, Mute Jar listens to your microphone activity during virtual meetings and automatically drops a virtual cartoon coin whenever you speak while muted. 
-
-At the end of each configurable cycle (weekly, fortnightly, or monthly), you review your accumulated MuteCoins and redeem them according to your chosen philosophy:
-- **😇 The Saint** — Cash in your coins for verified charitable donations (e.g., GlobalGiving, GiveDirectly, Doctors Without Borders), complete with receipt uploads and verified goal tracking.
-- **⚡ The Habit Builder** (The Pragmatist) — Redeem coins for physical fitness reps (pushups, squats), focus sprints, or book reading goals.
-- **👑 The Forfeit Master** (The Roast Master) — Pay your dues to colleagues with Friday morning donuts & barista coffee shouts, team social treats, or funny dares.
+> **A privacy-first meeting companion that detects when you speak while muted, drops MuteCoins into an animated jar, and turns awkward call slip-ups into charitable giving, personal habits, or team fun.**
 
 ---
 
-## 🔒 Privacy & Architecture
+## Table of Contents
 
-Mute Jar was architected with a **strict privacy-first guarantee**:
-- **Zero Cloud Audio**: Audio processing is executed 100% locally on your machine using the browser's Web Audio API and Fast Fourier Transform (FFT) spectrum analysis.
-- **No Speech Recognition or Transcripts**: The engine monitors volume, frequency variance, and speech energy thresholds only—it **never** transcribes, parses, records, or stores human words.
-- **Ambient Noise Filtering**: Features an adaptive background noise filter that differentiates near-field speaker speech from ambient background noise, radio, podcasts, or colleagues speaking across the room.
-- **Immutable Local Ledger**: Event logs, scheduled meetings, and pledged goals are stored strictly in your browser’s local storage (`localStorage`). To prevent tampering, individual mutes cannot be erased; only a complete profile wipe can reset historical data.
+1. [Purpose](#-purpose)
+2. [Key Features](#-key-features)
+3. [System Architecture](#-system-architecture)
+4. [Installation Instructions by Operating System](#-installation-instructions-by-operating-system)
+5. [Local Development & Testing](#-local-development--testing)
+6. [Configuration & Environment Variables](#-configuration--environment-variables)
+7. [License](#-license)
 
 ---
 
-## 💻 Installation & Background Setup by Operating System
+## 🎯 Purpose
 
-Mute Jar is designed to run silently in the background of your operating system without requiring an open browser window, and can start automatically on computer reboot.
+Everyone on remote or hybrid calls has uttered *"Sorry, I was on mute!"*
+
+**Mute Jar** turns that everyday interruption into measurable, light-hearted accountability without surveilling your conversations. Using strictly local, in-browser Web Audio analysis (zero audio recording and zero speech-to-text transcripts), Mute Jar tracks when you speak while muted, logs each incident into a tamper-resistant ledger, and helps you redeem accumulated MuteCoins at the end of every cycle according to your chosen philosophy:
+
+- **The Saint** — Convert MuteCoins into verified charitable donations (GlobalGiving, GiveDirectly, Doctors Without Borders, or a custom URL) with receipt uploads.
+- **The Habit Builder** *(formerly The Pragmatist)* — Turn slip-ups into constructive daily habits such as pushups, reading pages, or focus sprints.
+- **The Forfeit Master** *(formerly The Roast Master)* — Pay your dues to colleagues with coffee shouts, Friday pastries, or playful team dares.
+
+---
+
+## ✨ Key Features
+
+### 1. Real-Time On-Device Audio Detection
+- **100% In-Memory Web Audio Engine**: Uses `AudioContext` and FFT spectrum analysis in temporary RAM—no audio clips, waveforms, or transcripts are ever recorded or transmitted.
+- **Background Noise & Speaker Filtering**: Includes 2-second ambient noise-floor calibration, proximity mic profiles (near-field desk, headset boom, room mic), and optional voiceprint pitch ($F_0$) + formant matching to ignore background TV/radio or nearby coworkers.
+- **OS Focus / Do Not Disturb Awareness**: Automatically pauses audio monitoring when Focus / Do Not Disturb mode is active.
+- **5-Second Undo Grace Period**: Accidental manual or auto-detected drops can be undone within 5 seconds before locking into the ledger.
+
+### 2. Focus View Dashboard & Live Action Hub
+- **Streamlined Navigation**: Single-row header (`Mute Jar`, `Ledger`, `Pledges & Goals`) paired with a compact 2-tab workspace (`Meeting Ledger` and `Pledges & Goals`).
+- **3D Animated Mute Jar & Quick Controls**: Live coin counter, cycle value conversion in your local currency, instant **Drop Coin (+1)** button, and milestone progress tracker side by side.
+- **Custom Profile Photo & Built-in Avatars**: Upload your own profile photo (auto-cropped and resized client-side for lightweight local storage) or pick from 12 built-in character avatars.
+
+### 3. Settings-Only Multi-Calendar Auto-Tagging
+- **Zero Dashboard Clutter**: Calendar connections live strictly inside **Settings** with no extra schedule cards or tabs on the main screen.
+- **Up to 3 Calendars with Primary Priority**: Connect up to 3 calendars (Work, Personal, Side Project) and designate one as **Primary** so overlapping double-bookings always resolve cleanly.
+- **Hybrid Connection Options**:
+  - **1-Click OAuth** for standard Google Calendar and Microsoft 365 accounts.
+  - **Private Webcal / `.ICS` Subscription Feeds** for Apple iCloud or corporate environments where IT blocks third-party OAuth apps.
+- **Decoupled Logs & Sequential Unscheduled Fallback**: When a mute occurs, Mute Jar copies the matching meeting title into the ledger entry (with no backlink to your calendar). If no calendar event matches, it automatically labels `"Unscheduled meeting - mute #"` sequentially per 45-minute call window.
+- **Inline Ledger Editing**: Click the edit icon on any ledger row to rename a meeting title or add notes as a fallback.
+
+### 4. Cycle Reviews, Integrations & Local MCP
+- **Flexible Cycles**: Weekly (ISO week), Fortnightly (14 days), or Monthly cycles with automated cycle-end review & redemption modals.
+- **Team Chat Webhooks**: Relay Mute Jar milestones and roast summaries to Slack, Discord, or Microsoft Teams through the server webhook proxy (`/api/integrations/relay-webhook`).
+- **AI Pledge Suggestions & Local MCP Server**: Optional Gemini-powered pledge ideas (`/api/pledges/suggest`) and a built-in Model Context Protocol endpoint (`/api/mcp`) for connecting local AI clients such as Claude Desktop or Cursor.
+
+---
+
+## 🏗️ System Architecture
+
+Mute Jar uses a **local-first React SPA** backed by a lightweight **Express + Vite** Node.js server for webhook relaying, optional Gemini pledge generation, and local MCP state syncing.
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         Browser / Installed PWA                           │
+│                                                                           │
+│  ┌──────────────────────┐   ┌───────────────────┐   ┌──────────────────┐  │
+│  │  Web Audio Engine    │   │  MuteJarContext   │   │  React UI Views  │  │
+│  │  • Mic FFT Analysis  │──▶│  • Cycle Engine   │──▶│  • Hero Jar Hub  │  │
+│  │  • Noise Calibration │   │  • Multi-Calendar │   │  • Meeting Ledger│  │
+│  │  • Voiceprint Match  │   │    Resolver (≤3)  │   │  • Pledges/Goals │  │
+│  │  (100% RAM, 0 Audio) │   │  • localStorage   │   │  • Settings/Setup│  │
+│  └──────────────────────┘   └─────────┬─────────┘   └──────────────────┘  │
+└───────────────────────────────────────┼───────────────────────────────────┘
+                                        │ HTTP /api/* (Optional Integrations)
+┌───────────────────────────────────────▼───────────────────────────────────┐
+│                        Express Server (`server.ts`)                       │
+│                                                                           │
+│  • GET  /api/health                    Health probe                       │
+│  • POST /api/pledges/suggest           Gemini AI pledge suggestions       │
+│  • POST /api/integrations/relay-webhook Slack / Discord / Teams proxy     │
+│  • GET|POST /api/mcp & /api/mcp/sync-state Local MCP server & state sync  │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+### Repository Layout
+
+| Path | Responsibility |
+| :--- | :--- |
+| `src/App.tsx` | Main application shell, streamlined navigation, Focus View hero, and 2-tab workspace |
+| `src/context/MuteJarContext.tsx` | Central state store (`localStorage`), multi-calendar priority resolver, unscheduled mute counter, cycle calculations, and integration dispatcher |
+| `src/components/` | UI modules including `CartoonJar`, `AudioMonitor`, `LiveActionGoalHub`, `DashboardStats` (inline-editable ledger), `ActionTracker`, `SettingsModal`, `SetupModal`, and `UserProfileModal` (custom photo upload) |
+| `src/utils/` | `audioEngine.ts` (FFT & voiceprint), `cycles.ts`, `localeCurrency.ts`, `buildCacheManager.ts`, `security.ts`, and Vitest suites |
+| `src/types/index.ts` | TypeScript interfaces for mute records, calendar sources, pledges, audio settings, and integrations |
+| `server.ts` | Express backend serving Vite in development, static `dist/` in production, MCP endpoints, webhook relay, and Gemini suggestion route |
+
+---
+
+## 💻 Installation Instructions by Operating System
+
+Mute Jar can be installed as a standalone desktop app via Progressive Web App (PWA) support or built from source for any major desktop OS.
 
 ### 🪟 Windows (Windows 10 / 11)
 
-#### 1. Install as a Desktop Application
-1. Open Mute Jar in **Google Chrome** or **Microsoft Edge**.
-2. Click the **Install** icon in the address bar (or click **Install Desktop Application** in the app header).
-3. Confirm the installation. Mute Jar will now run in its own dedicated, borderless desktop window.
-
-#### 2. Run in the Background & Pin to Taskbar
-1. When Mute Jar opens, right-click its icon on the Windows Taskbar and select **"Pin to taskbar"**.
-2. You can minimize the app window during meetings—the Web Audio background worker continues active detection without interruption.
-
-#### 3. Autostart Silently on Windows Boot
-- **Method A (App Settings):** In the installed Mute Jar window, click the `···` menu in the title bar > **App settings** > toggle ON **"Start app when you sign in"**.
-- **Method B (Windows Startup Folder):**
-  1. Press `Win + R`, type `shell:startup`, and press `Enter`.
-  2. Drag and drop the Mute Jar desktop shortcut into this Startup folder.
+1. **Install as a Standalone App (Recommended)**:
+   - Open Mute Jar in **Microsoft Edge** or **Google Chrome**.
+   - Click the **Install** icon in the address bar (or the **Install App** button in the top header) and confirm.
+2. **Run in Background & Pin**:
+   - Right-click the Mute Jar icon on the Windows Taskbar and choose **Pin to taskbar**.
+   - Minimize the window during calls; microphone monitoring continues in the background (when started).
+3. **Auto-Launch at Sign-In (Optional)**:
+   - In Edge/Chrome's installed app title bar menu (`···`), open **App settings** and enable **Start app when you sign in**, **or** press `Win + R`, run `shell:startup`, and drop the Mute Jar shortcut inside.
+4. **Native `.exe` Wrapper (Optional)**:
+   ```bash
+   npx nativefier --name "MuteJar" --icon public/icon.svg --single-instance "http://localhost:3000"
+   ```
 
 ---
 
-### 🍏 macOS (Sonoma, Sequoia, Ventura)
+### 🍎 macOS (Ventura, Sonoma, Sequoia)
 
-#### 1. Install as a macOS Application
-1. Open Mute Jar in **Google Chrome** or **Safari**.
-2. In Chrome: Click the **Install** button in the omnibox (or navigate to **Menu > Save and Share > Install Mute Jar**).
-3. In Safari: Go to **File > Add to Dock**.
-4. Mute Jar will install as a native macOS application bundle in `~/Applications/Chrome Apps` or `/Applications`.
-
-#### 2. Keep in Dock & Silent Background Operation
-1. Right-click the Mute Jar icon in your Dock > **Options > Keep in Dock**.
-2. You can hide the application at any time using `⌘ + H`. The audio monitor remains active in the background throughout your Google Meet, Zoom, Slack Huddle, or Microsoft Teams calls.
-
-#### 3. Autostart on Mac Login
-1. Right-click the Mute Jar icon in the macOS Dock.
-2. Select **Options > Open at Login**.
-3. Alternatively, open **System Settings > General > Login Items** and add Mute Jar to the list of applications that launch on startup.
-
----
-
-### 🌐 ChromeOS / Chromebook
-
-#### 1. Install to Shelf
-1. Open Mute Jar in the Chrome browser.
-2. Click the **Install Mute Jar** icon in the address bar.
-3. The app will open in standalone window mode and appear in your ChromeOS launcher.
-
-#### 2. Pin to Shelf Status Bar
-1. Right-click (or two-finger tap) the Mute Jar icon on your shelf.
-2. Select **Pin** to keep the icon permanently on your status shelf.
-
-#### 3. Autostart on Chromebook Boot
-1. In ChromeOS, open **Settings > Apps > Manage your apps > Mute Jar**.
-2. Enable **"Open on startup"**.
+1. **Install as a macOS App (Recommended)**:
+   - **Safari**: Open Mute Jar and click **File → Add to Dock**.
+   - **Google Chrome / Brave / Arc**: Click the **Install** icon in the address bar (or **Menu → Save and Share → Install Mute Jar**). The app bundle is placed in `~/Applications/Chrome Apps`.
+2. **Keep in Dock & Hide Without Quitting**:
+   - Right-click the Dock icon → **Options → Keep in Dock**.
+   - Press `⌘ + H` during meetings to hide the window while audio monitoring stays active.
+3. **Grant Microphone Access**:
+   - On first monitor start, approve microphone permission in macOS **System Settings → Privacy & Security → Microphone**.
+4. **Auto-Launch at Login (Optional)**:
+   - Right-click the Dock icon → **Options → Open at Login**, or add Mute Jar under **System Settings → General → Login Items**.
+5. **Native `.app` / `.dmg` Wrapper (Optional)**:
+   ```bash
+   npx nativefier --name "MuteJar" --icon public/icon.svg --platform mac "http://localhost:3000"
+   ```
 
 ---
 
 ### 🐧 Linux (Ubuntu, Debian, Fedora, Arch)
 
-#### 1. Desktop Integration
-1. In Chrome, Chromium, or Brave, click **Install Mute Jar** from the URL bar.
-2. A `.desktop` launcher will be created automatically in `~/.local/share/applications/`.
-
-#### 2. Autostart on Desktop Session Login
-1. Copy the desktop entry to your autostart directory:
+1. **Install Desktop Entry (Recommended)**:
+   - Open Mute Jar in **Google Chrome**, **Chromium**, or **Brave**.
+   - Click **Install Mute Jar** in the address bar. This creates a `.desktop` entry in `~/.local/share/applications/`.
+2. **Auto-Start on Session Login (Optional)**:
    ```bash
    mkdir -p ~/.config/autostart
    cp ~/.local/share/applications/chrome-*mutejar*.desktop ~/.config/autostart/mutejar.desktop
    ```
+3. **Native AppImage / Binary (Optional)**:
+   ```bash
+   npx nativefier --name "MuteJar" --icon public/icon.svg --platform linux "http://localhost:3000"
+   ```
 
 ---
 
-## 🚀 Quickstart for Local Development
+### 🌐 ChromeOS (Chromebook)
 
-### Prerequisites
-- **Node.js** >= 18.0.0
-- **npm** >= 9.0.0
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/your-username/mute-jar.git
-cd mute-jar
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Start the Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 4. Run Test Suite
-```bash
-npm test
-```
-Runs the full Vitest unit test suite (verifying cycle bounds, ISO week calculations, and philosophy label helpers).
-
-### 5. Type-Check and Build
-```bash
-npm run lint    # runs tsc --noEmit
-npm run build   # runs unit tests and compiles production bundle to /dist
-```
+1. **Install to App Launcher**:
+   - Open Mute Jar in Chrome and click the **Install** icon in the omnibox.
+2. **Pin to Shelf & Autostart**:
+   - Two-finger tap (right-click) the Mute Jar icon on your shelf and choose **Pin**.
+   - To launch automatically on boot, open **ChromeOS Settings → Apps → Manage your apps → Mute Jar** and enable **Open on startup**.
 
 ---
 
-## 🧹 Automated Cache Clearance on Every Build
+### 🐳 Docker (Any OS / Self-Hosted)
 
-Mute Jar implements an automated cache lifecycle manager (`src/utils/buildCacheManager.ts`):
-- **Compile-Time Build Hash**: On every `npm run build` or Vite compile, a fresh `__APP_BUILD_ID__` timestamp hash is injected into the bundle.
-- **Automatic Purge on Launch**: When a newly built app loads in the user's browser, it detects that the stored build ID differs from the bundle's build ID. It automatically purges all:
-  - `localStorage` items (`mutejar_settings_v1`, `mutejar_mutes_v1`, `mutejar_pledges_v1`, etc.)
-  - `sessionStorage` session values
-  - `CacheStorage` service worker caches
-- **Clean Slate Guarantee**: This ensures that every new build starts with clean defaults, avoiding migration bugs, outdated schemas, or phantom cached recordings.
-- **Manual Flush**: You can also manually purge all local data anytime via the **Settings Modal > Build Version & Local Cache Lifecycle > "Clear Cache Now"** button.
-
----
-
-## 📦 Packaging & Installation Guide
-
-Choose the packaging approach that fits your workflow:
-
-### Option 1: 1-Click Progressive Web App (PWA) — *Recommended*
-No compilers or developer tools needed:
-1. Open the app in **Google Chrome**, **Microsoft Edge**, **Brave**, or **Safari**.
-2. Click the **"Install App"** button in the top navigation bar (or the install icon in the browser address bar).
-3. The app installs immediately as a standalone, borderless desktop window with taskbar/dock integration, offline capability, and OS autostart options.
-
-### Option 2: 1-Command Native Desktop Executable (`.exe`, `.dmg`, `.app`)
-To generate a standalone executable file without configuring Electron from scratch:
 ```bash
-# Windows (.exe):
-npx nativefier --name "MuteJar" --icon public/icon.svg --single-instance "http://localhost:3000"
-
-# macOS (.app / .dmg):
-npx nativefier --name "MuteJar" --icon public/icon.svg --platform mac "http://localhost:3000"
-
-# Linux (AppImage / binary):
-npx nativefier --name "MuteJar" --icon public/icon.svg --platform linux "http://localhost:3000"
-```
-
-### Option 3: Docker Container
-Run Mute Jar anywhere with Docker in a single command:
-```bash
-# Build container image
+# Build the image
 docker build -t mutejar .
 
-# Run container on port 3000
+# Run on port 3000
 docker run -d -p 3000:3000 --name mutejar-app mutejar
 ```
 
-### Option 4: Tauri Native Packaging (Lightweight Rust Shell)
-For teams that prefer ultra-compact native installers (<15MB):
+---
+
+## 🚀 Local Development & Testing
+
+### Prerequisites
+- **Node.js** `>= 18.0.0`
+- **npm** `>= 9.0.0`
+
+### Commands
+
 ```bash
-npm install -D @tauri-apps/cli
-npx tauri init
-npx tauri build
+# 1. Install dependencies
+npm install
+
+# 2. Start full-stack dev server (Express + Vite on port 3000)
+npm run dev
+
+# 3. Run unit tests (Vitest)
+npm test
+
+# 4. Type-check TypeScript
+npm run lint
+
+# 5. Run tests & build production bundle into dist/
+npm run build
+
+# 6. Start production server
+npm start
 ```
+
+Open `http://localhost:3000` in your browser once `npm run dev` is running.
 
 ---
 
-## 🛠️ Configuration & Key Settings
+## ⚙️ Configuration & Environment Variables
 
-All preferences can be customized within the app’s **Settings** modal:
-- **Philosophy Style**: Action-focused names (*The Habit Builder*, *The Forfeit Master*) vs. Classic labels (*The Pragmatist*, *The Roast Master*).
-- **MuteCoin Exchange Rate**: Assign a custom monetary valuation per coin in your local system currency (e.g., $1.00, £0.50, €1.00).
-- **Cycle Frequency**: Choose between **Weekly** (7-day ISO week), **Fortnightly** (14-day sprint cycles), or **Monthly** (calendar month).
-- **Speech Sensitivity Threshold**: 10-level slider adjusting speech onset threshold.
-- **Background Noise Filter**: Dynamic voice-to-noise margin (+15%) and quick 2-second ambient noise calibration.
-- **Speaker Voice Pattern (Voiceprint)**: Real-time fundamental pitch ($F_0$) autocorrelation and 16-band formant matching to exclude background radios, podcasts, and co-workers.
-- **Proximity Profile**: Near-field desk mic, headset boom mic, or room mic.
+Copy `.env.example` to `.env` if deploying with optional AI pledge suggestions:
+
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `PORT` | No | Server port (defaults to `3000`) |
+| `GEMINI_API_KEY` | No | Optional Google Gemini API key for AI-generated pledge ideas (`/api/pledges/suggest`); local curated fallbacks work without a key |
+
+All user preferences, custom avatars, calendar connections, mute logs, and pledges are stored locally in browser `localStorage` and can be wiped anytime via **Settings → Wipe All Data**.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **Apache-2.0 License**. See [LICENSE](LICENSE) for details.
+Licensed under the **Apache-2.0 License**.
