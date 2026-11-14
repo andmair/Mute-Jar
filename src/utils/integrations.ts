@@ -1,4 +1,5 @@
 import { ChatChannel, ChatPlatform, PublishableEventType } from '../types';
+import { getLocalApiUrl } from './localSidecar';
 
 export interface EventPayloadData {
   userName: string;
@@ -147,9 +148,9 @@ export async function sendWebhookNotification(
       body: JSON.stringify(payload),
       mode: 'cors',
     }).catch(async (directError) => {
-      // If direct fetch is blocked by browser CORS, route through local dev proxy
+      // If direct fetch is blocked by browser CORS, route through local sidecar relay
       console.warn('Direct webhook fetch blocked by CORS, trying local relay:', directError);
-      return await fetch('/api/integrations/relay-webhook', {
+      return await fetch(getLocalApiUrl('/api/integrations/relay-webhook'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -14,6 +14,25 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json());
 
+// Allow standalone Tauri desktop bundles to connect to the optional local sidecar on port 3000
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  if (
+    origin === 'tauri://localhost' ||
+    origin === 'http://tauri.localhost' ||
+    origin === 'https://tauri.localhost' ||
+    origin === 'http://localhost:3000'
+  ) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  return next();
+});
+
 // Initialize GoogleGenAI
 const apiKey = process.env.GEMINI_API_KEY || '';
 const ai = apiKey

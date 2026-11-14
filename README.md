@@ -9,10 +9,11 @@
 1. [Purpose](#-purpose)
 2. [Key Features](#-key-features)
 3. [System Architecture](#-system-architecture)
-4. [Installation Instructions by Operating System](#-installation-instructions-by-operating-system)
-5. [Local Development & Testing](#-local-development--testing)
-6. [Configuration & Environment Variables](#-configuration--environment-variables)
-7. [License](#-license)
+4. [Single-File Desktop Installers by OS](#-single-file-desktop-installers-by-os)
+5. [Optional Local MCP & Webhook Sidecar](#-optional-local-mcp--webhook-sidecar)
+6. [Local Development, Testing & Packaging](#-local-development-testing--packaging)
+7. [Configuration & Environment Variables](#-configuration--environment-variables)
+8. [License](#-license)
 
 ---
 
@@ -20,11 +21,11 @@
 
 Everyone on remote or hybrid calls has uttered *"Sorry, I was on mute!"*
 
-**Mute Jar** turns that everyday interruption into measurable, light-hearted accountability without surveilling your conversations. Using strictly local, in-browser Web Audio analysis (zero audio recording and zero speech-to-text transcripts), Mute Jar tracks when you speak while muted, logs each incident into a tamper-resistant ledger, and helps you redeem accumulated MuteCoins at the end of every cycle according to your chosen philosophy:
+**Mute Jar** turns that everyday interruption into measurable, light-hearted accountability without surveilling your conversations. Using strictly local, on-device Web Audio analysis (zero audio recording and zero speech-to-text transcripts), Mute Jar tracks when you speak while muted, logs each incident into a local ledger, and helps you redeem accumulated MuteCoins at the end of every cycle according to your chosen philosophy:
 
-- **The Saint** — Convert MuteCoins into verified charitable donations (GlobalGiving, GiveDirectly, Doctors Without Borders, or a custom URL) with receipt uploads.
-- **The Habit Builder** *(formerly The Pragmatist)* — Turn slip-ups into constructive daily habits such as pushups, reading pages, or focus sprints.
-- **The Forfeit Master** *(formerly The Roast Master)* — Pay your dues to colleagues with coffee shouts, Friday pastries, or playful team dares.
+- **The Saint** — Convert MuteCoins into charitable donations (GlobalGiving, GiveDirectly, Doctors Without Borders, or a custom URL) with receipt uploads.
+- **The Habit Builder** — Turn slip-ups into constructive daily habits such as pushups, reading pages, or focus sprints.
+- **The Forfeit Master** — Pay your dues to colleagues with coffee shouts, Friday pastries, or playful team dares.
 
 ---
 
@@ -50,38 +51,38 @@ Everyone on remote or hybrid calls has uttered *"Sorry, I was on mute!"*
 - **Decoupled Logs & Sequential Unscheduled Fallback**: When a mute occurs, Mute Jar copies the matching meeting title into the ledger entry (with no backlink to your calendar). If no calendar event matches, it automatically labels `"Unscheduled meeting - mute #"` sequentially per 45-minute call window.
 - **Inline Ledger Editing**: Click the edit icon on any ledger row to rename a meeting title or add notes as a fallback.
 
-### 4. Cycle Reviews, Integrations & Local MCP
-- **Flexible Cycles**: Weekly (ISO week), Fortnightly (14 days), or Monthly cycles with automated cycle-end review & redemption modals.
-- **Team Chat Webhooks**: Relay Mute Jar milestones and roast summaries to Slack, Discord, or Microsoft Teams through the server webhook proxy (`/api/integrations/relay-webhook`).
-- **AI Pledge Suggestions & Local MCP Server**: Optional Gemini-powered pledge ideas (`/api/pledges/suggest`) and a built-in Model Context Protocol endpoint (`/api/mcp`) for connecting local AI clients such as Claude Desktop or Cursor.
+### 4. Offline-First Desktop App & Optional Sidecar
+- **Standalone Native Bundles**: Packaged via **Tauri v2** into compact single-file OS installers (~8–15 MB) using the operating system's built-in webview—no Chromium bloat, no Electron ~120 MB binaries, and no Node.js or Docker required for end users.
+- **Graceful Offline Fallbacks**: Audio analysis, cycle tracking, ledger history, and persona-matched pledge suggestions work completely offline.
+- **Optional Local Sidecar**: When you run `npm run sidecar`, desktop builds automatically connect to `http://localhost:3000` for Slack/Discord/Teams webhook relaying, Gemini AI pledge suggestions, and Local MCP (Claude Desktop / Cursor) integration.
 
 ---
 
 ## 🏗️ System Architecture
 
-Mute Jar uses a **local-first React SPA** backed by a lightweight **Express + Vite** Node.js server for webhook relaying, optional Gemini pledge generation, and local MCP state syncing.
+Mute Jar uses an **offline-first React SPA** embedded inside a lightweight **Tauri v2** native shell (for desktop packages) or served as a **PWA**, with an optional **Express sidecar (`server.ts`)** for external webhooks, Gemini suggestions, and Local MCP.
 
 ```
-┌───────────────────────────────────────────────────────────────────────────┐
-│                         Browser / Installed PWA                           │
-│                                                                           │
-│  ┌──────────────────────┐   ┌───────────────────┐   ┌──────────────────┐  │
-│  │  Web Audio Engine    │   │  MuteJarContext   │   │  React UI Views  │  │
-│  │  • Mic FFT Analysis  │──▶│  • Cycle Engine   │──▶│  • Hero Jar Hub  │  │
-│  │  • Noise Calibration │   │  • Multi-Calendar │   │  • Meeting Ledger│  │
-│  │  • Voiceprint Match  │   │    Resolver (≤3)  │   │  • Pledges/Goals │  │
-│  │  (100% RAM, 0 Audio) │   │  • localStorage   │   │  • Settings/Setup│  │
-│  └──────────────────────┘   └─────────┬─────────┘   └──────────────────┘  │
-└───────────────────────────────────────┼───────────────────────────────────┘
-                                        │ HTTP /api/* (Optional Integrations)
-┌───────────────────────────────────────▼───────────────────────────────────┐
-│                        Express Server (`server.ts`)                       │
-│                                                                           │
-│  • GET  /api/health                    Health probe                       │
-│  • POST /api/pledges/suggest           Gemini AI pledge suggestions       │
-│  • POST /api/integrations/relay-webhook Slack / Discord / Teams proxy     │
-│  • GET|POST /api/mcp & /api/mcp/sync-state Local MCP server & state sync  │
-└───────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│            Tauri v2 Desktop App (.exe / .dmg / .AppImage) or PWA           │
+│                                                                            │
+│  ┌──────────────────────┐   ┌────────────────────┐   ┌──────────────────┐  │
+│  │  Web Audio Engine    │   │  MuteJarContext    │   │  React UI Views  │  │
+│  │  • Mic FFT Analysis  │──▶│  • Cycle Engine    │──▶│  • Hero Jar Hub  │  │
+│  │  • Noise Calibration │   │  • Multi-Calendar  │   │  • Meeting Ledger│  │
+│  │  • Voiceprint Match  │   │    Resolver (<=3)  │   │  • Pledges/Goals │  │
+│  │  (100% RAM, 0 Audio) │   │  • localStorage    │   │  • Settings/Setup│  │
+│  └──────────────────────┘   └─────────┬──────────┘   └──────────────────┘  │
+└───────────────────────────────────────┼────────────────────────────────────┘
+                                        │ Optional http://localhost:3000/api/*
+┌───────────────────────────────────────▼────────────────────────────────────┐
+│                    Optional Local Sidecar (`server.ts`)                    │
+│                                                                            │
+│  • GET  /api/health                      Health probe                      │
+│  • POST /api/pledges/suggest             Gemini AI pledge suggestions      │
+│  • POST /api/integrations/relay-webhook  Slack / Discord / Teams proxy     │
+│  • GET|POST /api/mcp & /api/mcp/sync-state Local MCP server & state sync   │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Repository Layout
@@ -90,99 +91,78 @@ Mute Jar uses a **local-first React SPA** backed by a lightweight **Express + Vi
 | :--- | :--- |
 | `src/App.tsx` | Main application shell, streamlined navigation, Focus View hero, and 2-tab workspace |
 | `src/context/MuteJarContext.tsx` | Central state store (`localStorage`), multi-calendar priority resolver, unscheduled mute counter, cycle calculations, and integration dispatcher |
-| `src/components/` | UI modules including `CartoonJar`, `AudioMonitor`, `LiveActionGoalHub`, `DashboardStats` (inline-editable ledger), `ActionTracker`, `SettingsModal`, `SetupModal`, and `UserProfileModal` (custom photo upload) |
-| `src/utils/` | `audioEngine.ts` (FFT & voiceprint), `cycles.ts`, `localeCurrency.ts`, `buildCacheManager.ts`, `security.ts`, and Vitest suites |
-| `src/types/index.ts` | TypeScript interfaces for mute records, calendar sources, pledges, audio settings, and integrations |
-| `server.ts` | Express backend serving Vite in development, static `dist/` in production, MCP endpoints, webhook relay, and Gemini suggestion route |
+| `src/components/` | UI modules including `CartoonJar`, `AudioMonitor`, `LiveActionGoalHub`, `DashboardStats`, `ActionTracker`, `SettingsModal`, `SetupModal`, and `UserProfileModal` |
+| `src/utils/` | `audioEngine.ts` (FFT & voiceprint), `localSidecar.ts` (Tauri URL routing & offline pledge fallback), `cycles.ts`, `localeCurrency.ts`, `security.ts`, and Vitest suites |
+| `src-tauri/` | Tauri v2 configuration (`tauri.conf.json`), Rust crate (`Cargo.toml`, `src/lib.rs`, `src/main.rs`), macOS microphone `Info.plist` & `Entitlements.plist`, and capability permissions |
+| `.github/workflows/release-desktop.yml` | Automated cross-platform CI matrix building Windows, macOS Universal, and Linux single-file releases |
+| `server.ts` | Optional Express sidecar & dev server providing CORS-enabled `/api/mcp`, webhook relay, and Gemini suggestion endpoints |
 
 ---
 
-## 💻 Installation Instructions by Operating System
+## 💻 Single-File Desktop Installers by OS
 
-Mute Jar can be installed as a standalone desktop app via Progressive Web App (PWA) support or built from source for any major desktop OS.
+Each operating system receives a dedicated **single-file download** (~8–15 MB) generated automatically via **Tauri v2** and `.github/workflows/release-desktop.yml` (on GitHub Releases), or installed in 1 click as a PWA on ChromeOS. End users do **not** need Node.js, Rust, or Docker installed.
+
+| Operating System | Single-File Download | Approx. Size | Install Experience |
+| :--- | :--- | :--- | :--- |
+| **Windows 10 / 11** | `MuteJar_x64-setup.exe` (NSIS) or `.msi` | ~10 MB | Standard wizard; uses built-in Windows WebView2 |
+| **macOS (Apple Silicon & Intel)** | `MuteJar_universal.dmg` | ~12 MB | Open `.dmg` & drag to Applications; built-in WKWebView |
+| **Linux (Ubuntu, Fedora, Arch)** | `MuteJar_amd64.AppImage` or `.deb` | ~14 MB | Run AppImage directly (`chmod +x`) or `apt install` `.deb` |
+| **ChromeOS (Chromebook)** | 1-Click PWA (Omnibox Install) | < 2 MB cache | Installs from browser bar to Shelf with offline cache |
 
 ### 🪟 Windows (Windows 10 / 11)
-
-1. **Install as a Standalone App (Recommended)**:
-   - Open Mute Jar in **Microsoft Edge** or **Google Chrome**.
-   - Click the **Install** icon in the address bar (or the **Install App** button in the top header) and confirm.
-2. **Run in Background & Pin**:
-   - Right-click the Mute Jar icon on the Windows Taskbar and choose **Pin to taskbar**.
-   - Minimize the window during calls; microphone monitoring continues in the background (when started).
-3. **Auto-Launch at Sign-In (Optional)**:
-   - In Edge/Chrome's installed app title bar menu (`···`), open **App settings** and enable **Start app when you sign in**, **or** press `Win + R`, run `shell:startup`, and drop the Mute Jar shortcut inside.
-4. **Native `.exe` Wrapper (Optional)**:
-   ```bash
-   npx nativefier --name "MuteJar" --icon public/icon.svg --single-instance "http://localhost:3000"
-   ```
-
----
+1. Download **`MuteJar_x64-setup.exe`** (for personal installs) or **`MuteJar_x64.msi`** (for enterprise rollout) from the Releases page.
+2. Double-click the file to run the installer—Windows 10/11 includes Microsoft Edge WebView2 by default, so no extra runtimes are downloaded.
+3. Launch **Mute Jar** from the Start Menu and pin it to your Taskbar.
+4. *(Optional Autostart)*: Press `Win + R`, type `shell:startup`, and drop the Mute Jar Start Menu shortcut into the folder.
 
 ### 🍎 macOS (Ventura, Sonoma, Sequoia)
-
-1. **Install as a macOS App (Recommended)**:
-   - **Safari**: Open Mute Jar and click **File → Add to Dock**.
-   - **Google Chrome / Brave / Arc**: Click the **Install** icon in the address bar (or **Menu → Save and Share → Install Mute Jar**). The app bundle is placed in `~/Applications/Chrome Apps`.
-2. **Keep in Dock & Hide Without Quitting**:
-   - Right-click the Dock icon → **Options → Keep in Dock**.
-   - Press `⌘ + H` during meetings to hide the window while audio monitoring stays active.
-3. **Grant Microphone Access**:
-   - On first monitor start, approve microphone permission in macOS **System Settings → Privacy & Security → Microphone**.
-4. **Auto-Launch at Login (Optional)**:
-   - Right-click the Dock icon → **Options → Open at Login**, or add Mute Jar under **System Settings → General → Login Items**.
-5. **Native `.app` / `.dmg` Wrapper (Optional)**:
-   ```bash
-   npx nativefier --name "MuteJar" --icon public/icon.svg --platform mac "http://localhost:3000"
-   ```
-
----
+1. Download the Universal **`MuteJar_universal.dmg`** (runs natively on both Apple Silicon M1–M4 and Intel Macs).
+2. Double-click the `.dmg` and drag **Mute Jar** into your **Applications** folder.
+3. Launch Mute Jar and allow microphone access when prompted (pre-declared via `src-tauri/Info.plist` and hardened sandbox `Entitlements.plist`).
+4. *(Optional Autostart)*: Open **System Settings → General → Login Items** and add **Mute Jar**.
 
 ### 🐧 Linux (Ubuntu, Debian, Fedora, Arch)
-
-1. **Install Desktop Entry (Recommended)**:
-   - Open Mute Jar in **Google Chrome**, **Chromium**, or **Brave**.
-   - Click **Install Mute Jar** in the address bar. This creates a `.desktop` entry in `~/.local/share/applications/`.
-2. **Auto-Start on Session Login (Optional)**:
-   ```bash
-   mkdir -p ~/.config/autostart
-   cp ~/.local/share/applications/chrome-*mutejar*.desktop ~/.config/autostart/mutejar.desktop
-   ```
-3. **Native AppImage / Binary (Optional)**:
-   ```bash
-   npx nativefier --name "MuteJar" --icon public/icon.svg --platform linux "http://localhost:3000"
-   ```
-
----
+- **Portable AppImage (Any Distro, Zero Install)**:
+  1. Download **`MuteJar_amd64.AppImage`**.
+  2. Make it executable and launch:
+     ```bash
+     chmod +x MuteJar_*.AppImage
+     ./MuteJar_*.AppImage
+     ```
+- **Debian / Ubuntu System Package**:
+  ```bash
+  sudo apt install ./MuteJar_*_amd64.deb
+  ```
+*(Note: Requires standard `libwebkit2gtk-4.1-0` on Linux desktops, pre-installed on most GNOME/Ubuntu systems.)*
 
 ### 🌐 ChromeOS (Chromebook)
-
-1. **Install to App Launcher**:
-   - Open Mute Jar in Chrome and click the **Install** icon in the omnibox.
-2. **Pin to Shelf & Autostart**:
-   - Two-finger tap (right-click) the Mute Jar icon on your shelf and choose **Pin**.
-   - To launch automatically on boot, open **ChromeOS Settings → Apps → Manage your apps → Mute Jar** and enable **Open on startup**.
+1. Open Mute Jar in Chrome and click the **Install** icon in the address bar (or **Setup → Install App**).
+2. Right-click the Mute Jar icon on your Shelf and choose **Pin**.
+3. To auto-start on boot, open **ChromeOS Settings → Apps → Manage your apps → Mute Jar → Open on startup**.
 
 ---
 
-### 🐳 Docker (Any OS / Self-Hosted)
+## 🔌 Optional Local MCP & Webhook Sidecar
+
+The packaged desktop app works **100% offline** with zero background daemons. If you also want to connect **Claude Desktop / Cursor** via Local MCP or relay alerts to **Slack / Discord / Microsoft Teams** webhooks from the desktop app:
 
 ```bash
-# Build the image
-docker build -t mutejar .
-
-# Run on port 3000
-docker run -d -p 3000:3000 --name mutejar-app mutejar
+# Runs the lightweight Express sidecar on http://localhost:3000
+npm run sidecar
 ```
+
+When running inside the Tauri desktop bundle, Mute Jar automatically routes `/api/mcp`, `/api/integrations/relay-webhook`, and `/api/pledges/suggest` calls to `http://localhost:3000` whenever the sidecar is active, and gracefully uses curated offline suggestions when it is stopped.
 
 ---
 
-## 🚀 Local Development & Testing
+## 🚀 Local Development, Testing & Packaging
 
 ### Prerequisites
-- **Node.js** `>= 18.0.0`
-- **npm** `>= 9.0.0`
+- **Node.js** `>= 18.0.0` and **npm** `>= 9.0.0` (for web dev & sidecar)
+- **Rust (`rustup` / `cargo`)** + OS WebView dev headers (only if building Tauri desktop installers locally; see `.github/workflows/release-desktop.yml` for exact CI system packages)
 
-### Commands
+### Web & Sidecar Commands
 
 ```bash
 # 1. Install dependencies
@@ -197,27 +177,40 @@ npm test
 # 4. Type-check TypeScript
 npm run lint
 
-# 5. Run tests & build production bundle into dist/
+# 5. Run tests & build production web bundle into dist/
 npm run build
 
-# 6. Start production server
-npm start
+# 6. Start standalone local MCP & webhook sidecar
+npm run sidecar
 ```
 
-Open `http://localhost:3000` in your browser once `npm run dev` is running.
+### Building Single-File Desktop Packages Locally
+
+```bash
+# 1. Generate native .icns, .ico, and PNG bundle icons from public/pwa-512x512.png
+npm run desktop:icons
+
+# 2. Launch live Tauri desktop window during development
+npm run desktop:dev
+
+# 3. Build single-file installers into src-tauri/target/release/bundle/
+npm run desktop:build
+```
+
+Pushing a version tag (e.g., `git tag v0.1.0 && git push origin v0.1.0`) triggers `.github/workflows/release-desktop.yml` to compile and upload Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) artifacts to a draft GitHub Release automatically.
 
 ---
 
 ## ⚙️ Configuration & Environment Variables
 
-Copy `.env.example` to `.env` if deploying with optional AI pledge suggestions:
+Copy `.env.example` to `.env` if running the optional sidecar with AI-powered pledge suggestions:
 
 | Variable | Required | Description |
 | :--- | :--- | :--- |
-| `PORT` | No | Server port (defaults to `3000`) |
-| `GEMINI_API_KEY` | No | Optional Google Gemini API key for AI-generated pledge ideas (`/api/pledges/suggest`); local curated fallbacks work without a key |
+| `PORT` | No | Local sidecar / server port (defaults to `3000`) |
+| `GEMINI_API_KEY` | No | Optional Google Gemini API key for AI-generated pledge ideas (`/api/pledges/suggest`); curated offline suggestions work without a key |
 
-All user preferences, custom avatars, calendar connections, mute logs, and pledges are stored locally in browser `localStorage` and can be wiped anytime via **Settings → Wipe All Data**.
+All user preferences, custom avatars, calendar connections, mute logs, and pledges stay locally on-device and can be wiped anytime via **Settings → Wipe All Data**.
 
 ---
 

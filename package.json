@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "sidecar": "tsx server.ts",
     "test": "vitest run",
     "build": "vitest run && vite build",
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "desktop:icons": "npx --yes @tauri-apps/cli@^2 icon public/pwa-512x512.png",
+    "desktop:dev": "npx --yes @tauri-apps/cli@^2 dev",
+    "desktop:build": "npx --yes @tauri-apps/cli@^2 build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

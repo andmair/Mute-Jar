@@ -27,6 +27,7 @@ import {
   sendWebhookNotification,
   EventPayloadData,
 } from '../utils/integrations';
+import { getLocalApiUrl } from '../utils/localSidecar';
 
 const detectedLocale = detectLocalCurrency();
 
@@ -1306,7 +1307,7 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     if (!integrationsConfig.mcpEnabled) return;
     const timeoutId = setTimeout(() => {
-      fetch('/api/mcp/sync-state', {
+      fetch(getLocalApiUrl('/api/mcp/sync-state'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

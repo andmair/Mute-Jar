@@ -4,6 +4,7 @@ import { useMuteJar } from '../context/MuteJarContext';
 import { CHARITY_AGGREGATORS, getCharityById } from '../utils/charities';
 import { sanitizeUrl } from '../utils/security';
 import { getPhilosophyCombinedLabel } from '../utils/philosophyLabels';
+import { getLocalApiUrl, getOfflinePledgeSuggestions } from '../utils/localSidecar';
 import {
   Heart,
   Zap,
@@ -219,12 +220,12 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
     setCharityStep('upload_receipt');
   };
 
-  // AI brainstormer fetch
+  // AI brainstormer fetch with seamless offline fallback
   const handleFetchAiSuggestions = async () => {
     setIsLoadingAi(true);
     setAiError(null);
     try {
-      const res = await fetch('/api/pledges/suggest', {
+      const res = await fetch(getLocalApiUrl('/api/pledges/suggest'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -238,14 +239,18 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
               : 'personal',
         }),
       });
+      if (!res.ok) {
+        throw new Error('Suggestion endpoint unavailable');
+      }
       const data = await res.json();
-      if (data && Array.isArray(data.suggestions)) {
+      if (data && Array.isArray(data.suggestions) && data.suggestions.length > 0) {
         setAiSuggestions(data.suggestions);
       } else {
-        setAiError('Could not generate suggestions at this time.');
+        setAiSuggestions(getOfflinePledgeSuggestions(settings.persona, currentCycleCoins));
       }
     } catch {
-      setAiError('Network error connecting to suggestion service.');
+      // Offline-first fallback when running standalone desktop bundle without sidecar
+      setAiSuggestions(getOfflinePledgeSuggestions(settings.persona, currentCycleCoins));
     } finally {
       setIsLoadingAi(false);
     }

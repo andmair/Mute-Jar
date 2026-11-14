@@ -1,0 +1,68 @@
+name: Release Desktop Installers
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+            os_label: macOS (Universal .dmg)
+          - platform: windows-latest
+            args: ''
+            os_label: Windows (.exe / .msi)
+          - platform: ubuntu-22.04
+            args: ''
+            os_label: Linux (.AppImage / .deb)
+
+    name: Build ${{ matrix.os_label }}
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install Linux WebKitGTK dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Generate platform icons from app icon
+        run: npx --yes @tauri-apps/cli@^2 icon public/pwa-512x512.png
+
+      - name: Build single-file OS installers
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Mute Jar ${{ github.ref_name }}'
+          releaseBody: 'Single-file desktop installers for Windows (.exe / .msi), macOS (Universal .dmg), and Linux (.AppImage / .deb). No Node.js or Docker required.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

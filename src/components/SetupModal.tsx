@@ -24,11 +24,14 @@ import {
   Layers,
   ArrowRight,
   Package,
+  Download,
+  Terminal,
 } from 'lucide-react';
 import { useMuteJar } from '../context/MuteJarContext';
 import { usePWAInstall } from '../utils/usePWAInstall';
 import { ChatPlatform, PublishableEventType } from '../types';
 import { buildSanitizedChatPayload, generateMcpClientConfig } from '../utils/integrations';
+import { getLocalApiUrl } from '../utils/localSidecar';
 import { MuteJarLogo } from './MuteJarLogo';
 
 interface SetupModalProps {
@@ -175,12 +178,15 @@ export const SetupModal: React.FC<SetupModalProps> = ({
   const handleInspectMcp = async () => {
     setIsLoadingMcp(true);
     try {
-      const res = await fetch('/api/mcp');
+      const res = await fetch(getLocalApiUrl('/api/mcp'));
       const data = await res.json();
       setMcpInspectorData(data);
       setMcpInspectorOpen(true);
     } catch {
-      setMcpInspectorData({ status: 'offline', note: 'Run tsx server.ts to activate local endpoint' });
+      setMcpInspectorData({
+        status: 'offline',
+        note: 'Run optional local sidecar (`npm run sidecar`) to activate http://localhost:3000/api/mcp',
+      });
       setMcpInspectorOpen(true);
     } finally {
       setIsLoadingMcp(false);
@@ -260,14 +266,14 @@ export const SetupModal: React.FC<SetupModalProps> = ({
 
           <button
             onClick={() => setActiveTab('packaging')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 whitespace-nowrap ${
               activeTab === 'packaging'
                 ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs border border-slate-200/80 dark:border-slate-700'
                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
             }`}
           >
             <Package className="w-3.5 h-3.5 text-sky-500" />
-            <span>Mac App Store &amp; Packaging</span>
+            <span>Desktop Installers</span>
           </button>
         </div>
 
@@ -816,46 +822,147 @@ export const SetupModal: React.FC<SetupModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: MAC APP STORE & PACKAGING */}
+          {/* TAB 4: SINGLE-FILE DESKTOP INSTALLERS */}
           {activeTab === 'packaging' && (
-            <div className="space-y-4 leading-relaxed text-slate-600 dark:text-slate-300">
-              <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 space-y-1">
-                <h3 className="text-xs font-bold text-sky-900 dark:text-sky-200 flex items-center gap-2">
-                  <Apple className="w-4 h-4 text-sky-500" />
-                  <span>Publishing Mute Jar to Apple Mac App Store</span>
+            <div className="space-y-5 leading-relaxed text-slate-600 dark:text-slate-300">
+              <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/70 space-y-1.5">
+                <h3 className="text-xs font-bold text-sky-950 dark:text-sky-100 flex items-center gap-2">
+                  <Download className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                  <span>Single-File Native Desktop Packages (Tauri v2)</span>
                 </h3>
-                <p className="text-[11px] text-sky-700 dark:text-sky-300">
-                  Step-by-step guidance for packaging, code signing, and submitting Mute Jar to the Mac App Store.
+                <p className="text-[11px] text-sky-800 dark:text-sky-200">
+                  ~8–15 MB single-file installers · Zero Docker, Electron, or Node.js runtime needed · Offline-first local storage &amp; audio engine
                 </p>
               </div>
 
+              {/* OS Selector */}
               <div className="space-y-3">
+                <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto">
+                  {([
+                    { id: 'windows', label: 'Windows (.exe / .msi)' },
+                    { id: 'mac', label: 'macOS (.dmg)' },
+                    { id: 'linux', label: 'Linux (.AppImage / .deb)' },
+                    { id: 'chromeos', label: 'ChromeOS (PWA)' },
+                  ] as const).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedOsTab(item.id)}
+                      className={`flex-1 py-1.5 px-2.5 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                        selectedOsTab === item.id
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Selected OS Guide */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                  {selectedOsTab === 'windows' && (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                          Windows 10 / 11 Single-File Installer
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                          MuteJar-Setup.exe · ~10 MB · WebView2
+                        </span>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                        <li>Download the single <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_x64-setup.exe</code> (or enterprise <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.msi</code>) from GitHub Releases.</li>
+                        <li>Double-click the installer—Windows 10/11 already includes WebView2, so installation finishes in seconds.</li>
+                        <li>Launch <strong>Mute Jar</strong> from the Start Menu and grant microphone access when starting the monitor.</li>
+                      </ol>
+                    </>
+                  )}
+
+                  {selectedOsTab === 'mac' && (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <Apple className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" />
+                          <span>macOS Universal Disk Image (Apple Silicon &amp; Intel)</span>
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                          MuteJar_universal.dmg · ~12 MB · WKWebView
+                        </span>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                        <li>Download the single Universal <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_universal.dmg</code> from GitHub Releases.</li>
+                        <li>Open the <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.dmg</code> and drag <strong>Mute Jar.app</strong> into your <strong>Applications</strong> folder.</li>
+                        <li>On first launch, approve microphone permission in <strong>System Settings → Privacy &amp; Security → Microphone</strong> (pre-configured via <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">src-tauri/Info.plist</code>).</li>
+                      </ol>
+                    </>
+                  )}
+
+                  {selectedOsTab === 'linux' && (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                          Linux Portable AppImage &amp; Debian Package
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                          .AppImage / .deb · ~14 MB · WebKitGTK
+                        </span>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                        <li><strong>Zero-install AppImage</strong> (Ubuntu, Fedora, Arch): Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_amd64.AppImage</code>, run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">chmod +x MuteJar*.AppImage</code>, and launch directly.</li>
+                        <li><strong>Debian / Ubuntu package</strong>: Download <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">MuteJar_amd64.deb</code> and run <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">sudo apt install ./MuteJar*.deb</code> for desktop menu integration.</li>
+                      </ol>
+                    </>
+                  )}
+
+                  {selectedOsTab === 'chromeos' && (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <Chrome className="w-3.5 h-3.5 text-amber-500" />
+                          <span>ChromeOS 1-Click Standalone App (PWA)</span>
+                        </h4>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                          Zero download · Native Shelf &amp; Offline Cache
+                        </span>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                        <li>Open Mute Jar in Chrome and click <strong>Install</strong> in the omnibox (or <strong>Install App</strong> in this modal).</li>
+                        <li>Right-click the Mute Jar icon on the ChromeOS Shelf to pin it or enable <strong>Open on startup</strong> in ChromeOS Settings.</li>
+                      </ol>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Build from Source & Optional Local Sidecar */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Recommended Approach: Native Swift / WKWebView Wrapper
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Build Single-File Package Locally</span>
                   </h4>
-                  <ul className="list-disc list-inside space-y-1 text-[11px]">
-                    <li><strong>Smallest footprint:</strong> ~6 MB binary vs ~90 MB for Electron.</li>
-                    <li><strong>Lowest RAM:</strong> ~25 MB idle in the menu bar.</li>
-                    <li><strong>Flawless Background Audio:</strong> Swift handles the microphone tap natively via <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">AVAudioEngine</code> and forwards energy levels to the UI via <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">WKScriptMessageHandler</code>.</li>
-                    <li><strong>Smooth App Store Review:</strong> Apple review accepts native AppKit status items with direct <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">NSMicrophoneUsageDescription</code>.</li>
-                  </ul>
+                  <p className="text-[11px]">
+                    Requires Rust toolchain + Tauri v2 CLI. Cross-platform release builds are automated in{' '}
+                    <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">.github/workflows/release-desktop.yml</code>.
+                  </p>
+                  <pre className="p-2.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px] overflow-x-auto">
+{`npm run desktop:icons
+npm run desktop:build`}
+                  </pre>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Alternative Approach: Electron (`electron-builder --mac mas`)
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Server className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Optional Local MCP &amp; Webhook Sidecar</span>
                   </h4>
-                  <ul className="list-disc list-inside space-y-1 text-[11px]">
-                    <li>Build command: <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">npx electron-builder --mac mas</code>.</li>
-                    <li>Guaranteed 100% Chromium Web Audio parity with zero Swift coding.</li>
-                    <li>Requires Apple Developer account ($99/yr) and hardened runtime entitlements:
-                      <code className="block mt-1 p-2 rounded bg-slate-900 text-slate-200 font-mono text-[10px]">
-                        com.apple.security.app-sandbox<br />
-                        com.apple.security.device.audio-input
-                      </code>
-                    </li>
-                  </ul>
+                  <p className="text-[11px]">
+                    Core audio monitoring, pledges, and local storage work offline. Start the optional sidecar only if you use Local MCP (Claude Desktop) or chat webhooks:
+                  </p>
+                  <pre className="p-2.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px] overflow-x-auto">
+{`npm run sidecar`}
+                  </pre>
                 </div>
               </div>
             </div>

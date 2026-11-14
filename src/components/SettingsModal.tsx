@@ -27,7 +27,7 @@ import {
   BellOff,
   Play,
   MessageSquare,
-  Apple,
+  Package,
   Plus,
   Star,
   Link2,
@@ -1124,16 +1124,16 @@ export const SettingsModal: React.FC<{
             )}
           </div>
 
-          {/* Native Mac App Store & Packaging Guide */}
+          {/* Single-File Desktop Installers Guide */}
           <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between gap-3">
             <div className="flex items-start gap-3">
-              <Apple className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <Package className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <div className="font-bold text-slate-900 dark:text-white text-xs">
-                  Mac App Store &amp; Packaging Guide
+                  Single-File Desktop Installers
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 text-[11px]">
-                  Compare Swift vs PWA vs Electron footprints and wrap Mute Jar in Xcode WKWebView.
+                  Download or build offline-first Tauri v2 installers (.exe/.msi, .dmg, .AppImage/.deb) and ChromeOS PWA.
                 </p>
               </div>
             </div>
