@@ -329,6 +329,11 @@ export const AudioMonitor: React.FC = () => {
             {/* Start / Stop Toggle Button */}
             <button
               onClick={handleToggleListening}
+              title={
+                settings.audioMonitorHotkey
+                  ? `${audioState.isListening ? 'Pause' : 'Start'} audio monitor (${settings.audioMonitorHotkey})`
+                  : `${audioState.isListening ? 'Pause' : 'Start'} audio monitor`
+              }
               className={`h-9 px-3.5 text-xs font-semibold rounded-xl transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer ${
                 audioState.isListening
                   ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40'

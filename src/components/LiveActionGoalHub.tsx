@@ -49,7 +49,7 @@ export const LiveActionGoalHub: React.FC<LiveActionGoalHubProps> = ({
     graceSecondsLeft,
   } = useMuteJar();
 
-  const philosophyInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
+  const philosophyInfo = getPhilosophyCombinedLabel(settings.persona);
 
   const handleToggleListening = async () => {
     if (audioState.isListening) {

@@ -75,6 +75,52 @@ jobs:
       - name: Stage installers into OS folder
         run: node scripts/stage-installers.mjs
 
+      - name: Verify macOS ad-hoc signature
+        if: matrix.os_folder == 'macos'
+        run: |
+          for dmg in installers/macos/*.dmg; do
+            echo "Inspecting signature for $dmg"
+            codesign -dv --verbose=2 "$dmg" || true
+          done
+
+      - name: Detect optional free SignPath OSS secrets
+        id: check-signing
+        if: matrix.os_folder == 'windows'
+        shell: bash
+        env:
+          SP_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SP_ORG: ${{ secrets.SIGNPATH_ORG_ID }}
+        run: |
+          if [ -n "$SP_TOKEN" ] && [ -n "$SP_ORG" ]; then
+            echo "has_signpath=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_signpath=false" >> "$GITHUB_OUTPUT"
+            echo "SignPath secrets not configured yet; keeping unsigned Windows installers."
+          fi
+
+      - name: Upload unsigned Windows installers for SignPath
+        id: upload-unsigned-windows
+        if: matrix.os_folder == 'windows' && steps.check-signing.outputs.has_signpath == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-windows-installers
+          path: |
+            installers/windows/*.exe
+            installers/windows/*.msi
+
+      - name: Sign Windows installers via SignPath Foundation (Free OSS)
+        if: matrix.os_folder == 'windows' && steps.check-signing.outputs.has_signpath == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORG_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'mute-jar' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_SLUG || 'default' }}
+          github-artifact-id: ${{ steps.upload-unsigned-windows.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: installers/windows
+
       - name: Upload ${{ matrix.os_label }} installers artifact
         uses: actions/upload-artifact@v4
         with:
@@ -95,7 +141,9 @@ jobs:
           fetch-depth: 0
 
       - name: Clear previous staged binaries while keeping OS README files
-        run: find installers/macos installers/windows installers/linux -type f ! -name 'README.md' -delete
+        run: |
+          find installers/macos installers/windows installers/linux -type f ! -name 'README.md' -delete
+          rm -f installers/SHA256SUMS.txt installers/SHA256SUMS.txt.asc
 
       - name: Copy macOS installers into installers/macos/
         uses: actions/download-artifact@v4
@@ -115,15 +163,44 @@ jobs:
           name: installers-linux
           path: installers/linux
 
-      - name: Verify installers and README files per OS folder
-        run: ls -la installers/macos installers/windows installers/linux installers/chromeos
+      - name: Generate SHA256SUMS.txt verification manifest
+        run: node scripts/generate-checksums.mjs
 
-      - name: Commit compiled installers to OS folders on branch
+      - name: Check optional free GPG signing key
+        id: check-gpg
+        env:
+          GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          if [ -n "$GPG_KEY" ]; then
+            echo "has_gpg=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_gpg=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign SHA256SUMS.txt with GPG (optional free key)
+        if: steps.check-gpg.outputs.has_gpg == 'true'
+        env:
+          GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASS: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          printf '%s\n' "$GPG_KEY" | gpg --batch --import
+          if [ -n "$GPG_PASS" ]; then
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASS" --armor --detach-sign installers/SHA256SUMS.txt
+          else
+            gpg --batch --yes --armor --detach-sign installers/SHA256SUMS.txt
+          fi
+
+      - name: Verify installers, checksums, and README files per OS folder
+        run: |
+          ls -la installers/macos installers/windows installers/linux installers/chromeos
+          cat installers/SHA256SUMS.txt || true
+
+      - name: Commit compiled installers and checksums to OS folders on branch
         if: startsWith(github.ref, 'refs/heads/')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add installers/macos installers/windows installers/linux
+          git add installers/macos installers/windows installers/linux installers/SHA256SUMS.txt*
           if git diff --cached --quiet; then
             echo "No installer changes to commit."
             exit 0
@@ -146,9 +223,10 @@ jobs:
           name: Mute Jar ${{ github.ref_name }}
           body: |
             Single-file desktop installers for every operating system:
-            - **macOS**: Universal `.dmg` (Apple Silicon & Intel)
-            - **Windows**: `.exe` (NSIS) and `.msi`
+            - **macOS**: Universal `.dmg` (Apple Silicon & Intel, ad-hoc signed)
+            - **Windows**: `.exe` (NSIS) and `.msi` (SignPath Foundation OSS signing when configured)
             - **Linux**: `.AppImage` and `.deb`
+            - **Verification**: `SHA256SUMS.txt` included for checksum validation
 
             No Node.js or Docker required.
           files: |
@@ -157,3 +235,5 @@ jobs:
             installers/windows/*.msi
             installers/linux/*.AppImage
             installers/linux/*.deb
+            installers/SHA256SUMS.txt
+            installers/SHA256SUMS.txt.asc

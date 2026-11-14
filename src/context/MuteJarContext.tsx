@@ -28,6 +28,11 @@ import {
   EventPayloadData,
 } from '../utils/integrations';
 import { getLocalApiUrl } from '../utils/localSidecar';
+import {
+  DEFAULT_AUDIO_MONITOR_HOTKEY,
+  isTypingTarget,
+  matchesHotkey,
+} from '../utils/hotkey';
 
 const detectedLocale = detectLocalCurrency();
 
@@ -70,6 +75,7 @@ interface MuteJarContextType {
   undoMuteCoin: (recordId?: string) => void;
   startListening: () => Promise<boolean>;
   stopListening: (pausedByDND?: boolean) => void;
+  toggleListening: () => Promise<boolean>;
   toggleDoNotDisturb: (forceState?: boolean) => void;
   playPreviewSound: (soundId?: string) => void;
   calibrateRoomNoise: () => Promise<{ averageFloor: number; peakFloor: number }>;
@@ -184,7 +190,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   roastActivityDescription: 'Bring fresh artisanal pastries and barista coffees to the sprint team when threshold is reached.',
   roastTargetCoins: 15, // 15 Mutecoins forfeit trigger
 
-  philosophyLabelStyle: 'improved',
+  audioMonitorHotkey: DEFAULT_AUDIO_MONITOR_HOTKEY,
 
   cycleFrequency: 'monthly',
 
@@ -426,6 +432,10 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
           currency: parsed.currency || DEFAULT_SETTINGS.currency,
           country: parsed.country || DEFAULT_SETTINGS.country,
           cycleFrequency: parsed.cycleFrequency || DEFAULT_SETTINGS.cycleFrequency,
+          audioMonitorHotkey:
+            parsed.audioMonitorHotkey !== undefined
+              ? parsed.audioMonitorHotkey
+              : DEFAULT_SETTINGS.audioMonitorHotkey,
           pendingPersonaChange: parsed.pendingPersonaChange,
           calendarSources: Array.isArray(parsed.calendarSources) ? parsed.calendarSources : DEFAULT_SETTINGS.calendarSources,
           autoTagMeetings: parsed.autoTagMeetings !== undefined ? parsed.autoTagMeetings : true,
@@ -777,7 +787,24 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   }, [addMuteCoin]);
 
-  const startListening = async (): Promise<boolean> => {
+  const isListeningRef = useRef(false);
+  useEffect(() => {
+    isListeningRef.current = audioState.isListening;
+    const tauriCore = (
+      window as unknown as {
+        __TAURI__?: {
+          core?: {
+            invoke?: (cmd: string, args: Record<string, unknown>) => Promise<unknown>;
+          };
+        };
+      }
+    ).__TAURI__?.core;
+    tauriCore?.invoke?.('set_tray_monitor_state', { active: audioState.isListening }).catch(() => {
+      // Non-fatal in web/PWA environments
+    });
+  }, [audioState.isListening]);
+
+  const startListening = useCallback(async (): Promise<boolean> => {
     const success = await audioEngine.startMicrophone();
     setAudioState((prev) => ({
       ...prev,
@@ -785,9 +812,9 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       dndPausedAudio: false,
     }));
     return success;
-  };
+  }, []);
 
-  const stopListening = (pausedByDND: boolean = false) => {
+  const stopListening = useCallback((pausedByDND: boolean = false) => {
     audioEngine.stopAll();
     setAudioState((prev) => ({
       ...prev,
@@ -806,7 +833,38 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       detectedPitchHz: null,
       dndPausedAudio: pausedByDND,
     }));
-  };
+  }, []);
+
+  const toggleListening = useCallback(async (): Promise<boolean> => {
+    if (isListeningRef.current) {
+      stopListening();
+      return false;
+    }
+    return startListening();
+  }, [startListening, stopListening]);
+
+  // Listen for OS status bar / system tray quick-toggle events & custom audio monitor hotkey
+  useEffect(() => {
+    const handleTrayToggle = () => {
+      void toggleListening();
+    };
+
+    const handleHotkeyKeyDown = (e: KeyboardEvent) => {
+      if (document.body.dataset.recordingHotkey === 'true') return;
+      if (isTypingTarget(e.target)) return;
+      if (matchesHotkey(e, settings.audioMonitorHotkey)) {
+        e.preventDefault();
+        void toggleListening();
+      }
+    };
+
+    window.addEventListener('mutejar:toggle-audio-monitor', handleTrayToggle);
+    window.addEventListener('keydown', handleHotkeyKeyDown);
+    return () => {
+      window.removeEventListener('mutejar:toggle-audio-monitor', handleTrayToggle);
+      window.removeEventListener('keydown', handleHotkeyKeyDown);
+    };
+  }, [toggleListening, settings.audioMonitorHotkey]);
 
   const toggleDoNotDisturb = (forceState?: boolean) => {
     setAudioState((prev) => {
@@ -1522,6 +1580,7 @@ export const MuteJarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         undoMuteCoin,
         startListening,
         stopListening,
+        toggleListening,
         toggleDoNotDisturb,
         playPreviewSound: (soundId?: string) => audioEngine.playPreviewSound(soundId || settings.depositSoundId || 'glass_clink'),
         calibrateRoomNoise,

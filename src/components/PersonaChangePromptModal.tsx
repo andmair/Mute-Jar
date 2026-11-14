@@ -38,8 +38,8 @@ export const PersonaChangePromptModal: React.FC<PersonaChangePromptModalProps> =
 
   if (!isOpen || !targetPersona) return null;
 
-  const currentInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
-  const targetInfo = getPhilosophyCombinedLabel(targetPersona, settings.philosophyLabelStyle);
+  const currentInfo = getPhilosophyCombinedLabel(settings.persona);
+  const targetInfo = getPhilosophyCombinedLabel(targetPersona);
 
   const getPersonaIcon = (type: PersonaType) => {
     switch (type) {

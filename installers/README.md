@@ -1,13 +1,14 @@
 # Desktop Installers
 
-Compiled single-file installers are organized by operating system into the sub-folders below by GitHub Actions (`.github/workflows/release-desktop.yml`) on **every commit** and locally via `npm run desktop:build && node scripts/stage-installers.mjs`:
+Compiled single-file installers are organized by operating system into the sub-folders below by GitHub Actions (`.github/workflows/release-desktop.yml`) on **every commit** and locally via `npm run desktop:build && node scripts/stage-installers.mjs && node scripts/generate-checksums.mjs`:
 
-- `installers/macos/` — Universal `.dmg` (Apple Silicon & Intel)
-- `installers/windows/` — `-setup.exe` (NSIS) & `.msi`
+- `installers/macos/` — Universal `.dmg` (Apple Silicon & Intel, ad-hoc signed)
+- `installers/windows/` — `-setup.exe` (NSIS) & `.msi` (SignPath Foundation free OSS signing when configured)
 - `installers/linux/` — `.AppImage` & `.deb`
 - `installers/chromeos/` — 1-click PWA install instructions
+- `installers/SHA256SUMS.txt` — Generated SHA-256 integrity manifest (plus `SHA256SUMS.txt.asc` when a free GPG signing secret is configured)
 
-### How Downloads Work
-1. When a branch commit finishes building on GitHub Actions, the workflow automatically copies the compiled binaries into `installers/macos/`, `installers/windows/`, and `installers/linux/` (alongside each folder's `README.md`) and commits them back with `[skip ci]`.
-2. You can download installers directly from the repository folders, from **GitHub → Actions** artifacts (`mutejar-installers-all-os`), or directly inside Mute Jar (**Setup → Desktop Installers**, served via `/downloads`).
-3. Tagged builds (`v*`) also attach all single-file installers to **GitHub → Releases**.
+### Free Signing Secrets (GitHub Actions)
+- **Windows (SignPath Foundation, $0 for public Apache-2.0 OSS)**: Add `SIGNPATH_API_TOKEN` and `SIGNPATH_ORG_ID` repository secrets (plus optional `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG`, `SIGNPATH_ARTIFACT_CONFIG_SLUG` variables) to eliminate Windows SmartScreen warnings automatically.
+- **macOS ($0 Ad-Hoc)**: Configured automatically via `"signingIdentity": "-"` in `src-tauri/tauri.conf.json`. See `installers/macos/README.md` for one-time quarantine bypass instructions.
+- **Checksums & Optional GPG ($0)**: `SHA256SUMS.txt` is generated automatically; optionally add `GPG_PRIVATE_KEY` (and `GPG_PASSPHRASE`) secrets to attach `SHA256SUMS.txt.asc`.

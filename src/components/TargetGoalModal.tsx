@@ -92,7 +92,7 @@ export const TargetGoalModal: React.FC<TargetGoalModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null;
 
-  const labelInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
+  const labelInfo = getPhilosophyCombinedLabel(settings.persona);
 
   const handleSave = () => {
     if (settings.persona === 'saint') {

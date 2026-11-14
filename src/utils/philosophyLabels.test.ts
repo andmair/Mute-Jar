@@ -8,16 +8,10 @@ import { CHARITY_AGGREGATORS, getCharityById } from './charities';
 import { sanitizeUrl, sanitizeText } from './security';
 
 describe('Philosophy Labels & Metadata', () => {
-  it('provides improved labels by default', () => {
-    expect(getPhilosophyDisplayTitle('pragmatist', 'improved')).toBe('The Habit Builder');
-    expect(getPhilosophyDisplayTitle('roastmaster', 'improved')).toBe('The Forfeit Master');
-    expect(getPhilosophyDisplayTitle('saint', 'improved')).toBe('The Saint');
-  });
-
-  it('supports classic labels when requested', () => {
-    expect(getPhilosophyDisplayTitle('pragmatist', 'classic')).toBe('The Pragmatist');
-    expect(getPhilosophyDisplayTitle('roastmaster', 'classic')).toBe('The Roast Master');
-    expect(getPhilosophyDisplayTitle('saint', 'classic')).toBe('The Saint');
+  it('provides clean action-focused philosophy titles', () => {
+    expect(getPhilosophyDisplayTitle('pragmatist')).toBe('The Habit Builder');
+    expect(getPhilosophyDisplayTitle('roastmaster')).toBe('The Forfeit Master');
+    expect(getPhilosophyDisplayTitle('saint')).toBe('The Saint');
   });
 
   it('provides accurate target units and nouns for all personas', () => {
@@ -31,14 +25,16 @@ describe('Philosophy Labels & Metadata', () => {
     expect(PHILOSOPHY_CONFIGS.roastmaster.targetNoun).toBe('Forfeit Trigger Target');
   });
 
-  it('provides correct combined labels and subtitles', () => {
-    const habitInfo = getPhilosophyCombinedLabel('pragmatist', 'improved');
+  it('provides combined labels without classic persona names', () => {
+    const habitInfo = getPhilosophyCombinedLabel('pragmatist');
     expect(habitInfo.title).toBe('The Habit Builder');
-    expect(habitInfo.subtitle).toContain('The Pragmatist');
+    expect(habitInfo.subtitle).toBe('Productivity & Growth');
+    expect(habitInfo.subtitle).not.toContain('Pragmatist');
 
-    const forfeitInfo = getPhilosophyCombinedLabel('roastmaster', 'improved');
+    const forfeitInfo = getPhilosophyCombinedLabel('roastmaster');
     expect(forfeitInfo.title).toBe('The Forfeit Master');
-    expect(forfeitInfo.subtitle).toContain('The Roast Master');
+    expect(forfeitInfo.subtitle).toBe('Team Treats & Dares');
+    expect(forfeitInfo.subtitle).not.toContain('Roast Master');
   });
 });
 

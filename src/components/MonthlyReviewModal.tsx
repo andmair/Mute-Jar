@@ -102,7 +102,7 @@ export const MonthlyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void
 
   if (!isOpen) return null;
 
-  const personaInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
+  const personaInfo = getPhilosophyCombinedLabel(settings.persona);
   const totalValuation = formatCurrency(currentCycleCoins * settings.perCoinValue);
 
   // Compress photo for local storage

@@ -3,11 +3,10 @@ import { PersonaType } from '../types';
 export interface PhilosophyMeta {
   id: PersonaType;
   title: string; // e.g. "The Habit Builder"
-  classicTitle: string; // e.g. "The Pragmatist"
   tagline: string;
   boxTitle: string;
   targetUnitLabel: string;
-  targetNoun: string; // "Donation Threshold" | "Habit Milestone" | "Forfeit Trigger"
+  targetNoun: string; // "Donation Threshold" | "Habit Milestone Target" | "Forfeit Trigger Target"
   summary: string;
   benefit: string;
   colorScheme: {
@@ -24,7 +23,6 @@ export const PHILOSOPHY_CONFIGS: Record<PersonaType, PhilosophyMeta> = {
   saint: {
     id: 'saint',
     title: 'The Saint',
-    classicTitle: 'The Saint',
     tagline: 'Charity & Giving',
     boxTitle: 'Charity Donation Target',
     targetUnitLabel: 'Mutecoins',
@@ -43,7 +41,6 @@ export const PHILOSOPHY_CONFIGS: Record<PersonaType, PhilosophyMeta> = {
   pragmatist: {
     id: 'pragmatist',
     title: 'The Habit Builder',
-    classicTitle: 'The Pragmatist',
     tagline: 'Productivity & Growth',
     boxTitle: 'Productivity Habit Goal',
     targetUnitLabel: 'Mutecoins',
@@ -62,7 +59,6 @@ export const PHILOSOPHY_CONFIGS: Record<PersonaType, PhilosophyMeta> = {
   roastmaster: {
     id: 'roastmaster',
     title: 'The Forfeit Master',
-    classicTitle: 'The Roast Master',
     tagline: 'Humor & Team Fun',
     boxTitle: 'Team Activity / Forfeit',
     targetUnitLabel: 'Mutecoins',
@@ -80,22 +76,14 @@ export const PHILOSOPHY_CONFIGS: Record<PersonaType, PhilosophyMeta> = {
   },
 };
 
-export function getPhilosophyDisplayTitle(
-  persona: PersonaType,
-  labelStyle: 'improved' | 'classic' = 'improved'
-): string {
+export function getPhilosophyDisplayTitle(persona: PersonaType): string {
   const conf = PHILOSOPHY_CONFIGS[persona] || PHILOSOPHY_CONFIGS.pragmatist;
-  if (labelStyle === 'classic') {
-    return conf.classicTitle;
-  }
   return conf.title;
 }
 
 export function getPhilosophyCombinedLabel(
-  persona: PersonaType,
-  labelStyle: 'improved' | 'classic' = 'improved'
+  persona: PersonaType
 ): { title: string; subtitle: string; tag: string } {
-  const conf = PHILOSOPHY_CONFIGS[persona] || PHILOSOPHY_CONFIGS.pragmatist;
   if (persona === 'saint') {
     return {
       title: 'The Saint',
@@ -105,14 +93,14 @@ export function getPhilosophyCombinedLabel(
   }
   if (persona === 'pragmatist') {
     return {
-      title: labelStyle === 'classic' ? 'The Pragmatist' : 'The Habit Builder',
-      subtitle: labelStyle === 'classic' ? 'Productivity & Growth' : 'Personal Growth & Habits (The Pragmatist)',
+      title: 'The Habit Builder',
+      subtitle: 'Productivity & Growth',
       tag: 'Habit Milestone',
     };
   }
   return {
-    title: labelStyle === 'classic' ? 'The Roast Master' : 'The Forfeit Master',
-    subtitle: labelStyle === 'classic' ? 'Humor & Team Fun' : 'Team Treats & Dares (The Roast Master)',
+    title: 'The Forfeit Master',
+    subtitle: 'Team Treats & Dares',
     tag: 'Team Forfeit',
   };
 }

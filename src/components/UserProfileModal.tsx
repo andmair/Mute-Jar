@@ -288,7 +288,7 @@ export const UserProfileModal: React.FC<{
                 <div className="p-1.5 rounded-lg bg-rose-500 text-white shadow-2xs">
                   <Crown className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-bold text-[11px]">Roast Master</span>
+                <span className="font-bold text-[11px]">Forfeit Master</span>
                 <span className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">Team Fun Goals</span>
               </button>
             </div>

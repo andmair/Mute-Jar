@@ -71,7 +71,6 @@ export const OnboardingModal: React.FC = () => {
     updateSettings({
       persona: selectedPersona,
       hasCompletedOnboarding: true,
-      philosophyLabelStyle: 'improved',
       ...defaultTarget,
     });
   };
@@ -90,7 +89,6 @@ export const OnboardingModal: React.FC = () => {
     {
       id: 'pragmatist' as PersonaType,
       title: 'The Habit Builder',
-      subtitle: '(formerly The Pragmatist)',
       tagline: 'Productivity & Growth',
       description: 'Make yourself better with every mute. Convert mutecoins into pushup reps, book pages, and focused habit streaks.',
       icon: Zap,
@@ -101,7 +99,6 @@ export const OnboardingModal: React.FC = () => {
     {
       id: 'roastmaster' as PersonaType,
       title: 'The Forfeit Master',
-      subtitle: '(formerly The Roast Master)',
       tagline: 'Humor & Team Fun',
       description: 'Keep the team laughing. If you speak on mute, you buy coffees, bring donuts, or do a playful lightning presentation.',
       icon: Crown,

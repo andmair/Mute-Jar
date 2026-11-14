@@ -112,7 +112,7 @@ export interface UserSettings {
   roastActivityDescription?: string;
   roastTargetCoins?: number; // target in Mutecoins (not currency)
 
-  philosophyLabelStyle?: 'improved' | 'classic';
+  audioMonitorHotkey?: string; // Keyboard shortcut to toggle audio monitor on/off (default: 'Alt+Shift+M')
 
   cycleFrequency: CycleFrequency; // 'weekly' | 'fortnightly' | 'monthly'
   pendingPersonaChange?: {

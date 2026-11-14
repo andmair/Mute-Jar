@@ -2,6 +2,8 @@
 
 > **A privacy-first meeting companion that detects when you speak while muted, drops MuteCoins into an animated jar, and turns awkward call slip-ups into charitable giving, personal habits, or team fun.**
 
+**[Download Installers](./DOWNLOAD.md)** · **[Privacy Policy](./PRIVACY.md)** · **[GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases)**
+
 ---
 
 ## Table of Contents
@@ -94,6 +96,8 @@ Mute Jar uses an **offline-first React SPA** embedded inside a lightweight **Tau
 | `src/components/` | UI modules including `CartoonJar`, `AudioMonitor`, `LiveActionGoalHub`, `DashboardStats`, `ActionTracker`, `SettingsModal`, `SetupModal`, and `UserProfileModal` |
 | `src/utils/` | `audioEngine.ts` (FFT & voiceprint), `localSidecar.ts` (Tauri URL routing & offline pledge fallback), `cycles.ts`, `localeCurrency.ts`, `security.ts`, and Vitest suites |
 | `src-tauri/` | Tauri v2 configuration (`tauri.conf.json`), Rust crate (`Cargo.toml`, `src/lib.rs`, `src/main.rs`), macOS microphone `Info.plist` & `Entitlements.plist`, and capability permissions |
+| `DOWNLOAD.md` & `PRIVACY.md` | Dedicated GitHub download guide and zero-recording privacy policy |
+| `docs/` | Static GitHub Pages site (`index.html`, `download.html`, `privacy.html`) |
 | `.github/workflows/release-desktop.yml` | Automated cross-platform CI matrix building Windows, macOS Universal, and Linux single-file releases |
 | `server.ts` | Optional Express sidecar & dev server providing CORS-enabled `/api/mcp`, webhook relay, and Gemini suggestion endpoints |
 
@@ -140,6 +144,11 @@ Each operating system receives a dedicated **single-file download** (~8–15 MB)
 1. Open Mute Jar in Chrome and click the **Install** icon in the address bar (or **Setup → Install App**).
 2. Right-click the Mute Jar icon on your Shelf and choose **Pin**.
 3. To auto-start on boot, open **ChromeOS Settings → Apps → Manage your apps → Mute Jar → Open on startup**.
+
+### 🔐 Free Code Signing & Integrity Verification
+- **Windows (SignPath Foundation — Free for Open Source)**: Apply at [`signpath.org/apply`](https://signpath.org/apply) and configure `SIGNPATH_API_TOKEN` and `SIGNPATH_ORG_ID` repository secrets (plus optional `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG`, `SIGNPATH_ARTIFACT_CONFIG_SLUG` repository variables) to automatically sign `.exe` and `.msi` packages via [SignPath Foundation](https://signpath.org/) and eliminate Windows SmartScreen warnings. Before onboarding, click **More info → Run anyway** after verifying `Get-FileHash .\Mute*.exe -Algorithm SHA256`.
+- **macOS (Free Ad-Hoc Signing)**: Tauri v2 signs macOS builds with `"signingIdentity": "-"` (`src-tauri/tauri.conf.json`) for Apple Silicon entitlements without a paid $99/yr Developer ID. If Gatekeeper flags the downloaded app, allow it under **System Settings → Privacy & Security → Open Anyway** or run `xattr -rd com.apple.quarantine "/Applications/Mute Jar.app"`.
+- **Linux & Cross-OS Checksums**: Every CI build generates `installers/SHA256SUMS.txt` (verify with `sha256sum -c SHA256SUMS.txt --ignore-missing`), and optionally creates a detached GPG signature (`SHA256SUMS.txt.asc`) if `GPG_PRIVATE_KEY` (and optional `GPG_PASSPHRASE`) secrets exist. Staged checksums are also exposed in-app via **Desktop Installers** (`/downloads`).
 
 ---
 

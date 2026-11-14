@@ -27,15 +27,17 @@ import {
   BellOff,
   Play,
   MessageSquare,
-  Package,
   Plus,
   Star,
   Link2,
   KeyRound,
+  Keyboard,
+  ExternalLink,
 } from 'lucide-react';
 import { POPULAR_CURRENCIES, detectLocalCurrency, getCurrencySymbol } from '../utils/localeCurrency';
 import { getCurrentBuildId, purgeAllLocalCacheNow } from '../utils/buildCacheManager';
 import { SYSTEM_SOUND_OPTIONS } from '../utils/audioEngine';
+import { DEFAULT_AUDIO_MONITOR_HOTKEY, parseHotkeyFromEvent } from '../utils/hotkey';
 import { MuteJarLogo } from './MuteJarLogo';
 
 export const SettingsModal: React.FC<{
@@ -70,6 +72,50 @@ export const SettingsModal: React.FC<{
   const [calibratedNotice, setCalibratedNotice] = React.useState<string | null>(null);
   const [promptPersona, setPromptPersona] = React.useState<PersonaType | null>(null);
   const [showPromptModal, setShowPromptModal] = React.useState(false);
+  const [isRecordingHotkey, setIsRecordingHotkey] = React.useState(false);
+  const [hotkeyError, setHotkeyError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      setIsRecordingHotkey(false);
+      setHotkeyError(null);
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (!isRecordingHotkey) {
+      delete document.body.dataset.recordingHotkey;
+      return;
+    }
+
+    document.body.dataset.recordingHotkey = 'true';
+    const handleKeyCapture = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const parsed = parseHotkeyFromEvent(e);
+      if (parsed.cancelled) {
+        setIsRecordingHotkey(false);
+        setHotkeyError(null);
+        return;
+      }
+      if (parsed.error) {
+        setHotkeyError(parsed.error);
+        return;
+      }
+      if (parsed.hotkey) {
+        updateSettings({ audioMonitorHotkey: parsed.hotkey });
+        setIsRecordingHotkey(false);
+        setHotkeyError(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyCapture, { capture: true });
+    return () => {
+      delete document.body.dataset.recordingHotkey;
+      window.removeEventListener('keydown', handleKeyCapture, { capture: true });
+    };
+  }, [isRecordingHotkey, updateSettings]);
 
   // Multi-calendar Settings form state (max 3)
   const [showAddCalendar, setShowAddCalendar] = React.useState(false);
@@ -151,13 +197,10 @@ export const SettingsModal: React.FC<{
 
   if (!isOpen) return null;
 
-  const isImproved = settings.philosophyLabelStyle !== 'classic';
-
   const personas = [
     {
       id: 'saint' as PersonaType,
       title: 'The Saint',
-      altTitle: 'Charity Impact',
       tagline: 'Charity & Giving',
       icon: Heart,
       accent: 'border-sky-400 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200',
@@ -165,8 +208,7 @@ export const SettingsModal: React.FC<{
     },
     {
       id: 'pragmatist' as PersonaType,
-      title: isImproved ? 'The Habit Builder' : 'The Pragmatist',
-      altTitle: isImproved ? 'formerly The Pragmatist' : 'Habit Milestone',
+      title: 'The Habit Builder',
       tagline: 'Habits & Productivity',
       icon: Zap,
       accent: 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200',
@@ -174,8 +216,7 @@ export const SettingsModal: React.FC<{
     },
     {
       id: 'roastmaster' as PersonaType,
-      title: isImproved ? 'The Forfeit Master' : 'The Roast Master',
-      altTitle: isImproved ? 'formerly The Roast Master' : 'Team Treats & Dares',
+      title: 'The Forfeit Master',
       tagline: 'Team Dares & Treats',
       icon: Crown,
       accent: 'border-rose-400 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200',
@@ -216,32 +257,6 @@ export const SettingsModal: React.FC<{
               <label className="font-bold text-slate-900 dark:text-white">
                 Active Mute Philosophy
               </label>
-              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => updateSettings({ philosophyLabelStyle: 'improved' })}
-                  className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                    isImproved
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                  title="Use action-focused improved names (The Habit Builder, The Forfeit Master)"
-                >
-                  Action Labels
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSettings({ philosophyLabelStyle: 'classic' })}
-                  className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                    !isImproved
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                  title="Use original names (The Pragmatist, The Roast Master)"
-                >
-                  Classic Labels
-                </button>
-              </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {personas.map((p) => {
@@ -298,10 +313,6 @@ export const SettingsModal: React.FC<{
                 </div>
               </div>
             )}
-
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 text-center">
-              💡 Suggested naming: <strong>The Habit Builder</strong> (replaces Pragmatist for concrete habit reps) & <strong>The Forfeit Master</strong> (replaces Roast Master for team treats & dares).
-            </p>
           </div>
 
           {/* Sound & Audio Calibration */}
@@ -684,7 +695,7 @@ export const SettingsModal: React.FC<{
                   </span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Closing or minimizing the window keeps Mute Jar running in your macOS menu bar or Windows system tray with a quick-access icon.
+                  Closing or minimizing the window keeps Mute Jar running in your macOS menu bar or Windows system tray. Clicking the status bar icon quick-toggles the audio monitor.
                 </p>
               </div>
               <input
@@ -694,6 +705,87 @@ export const SettingsModal: React.FC<{
                 className="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
               />
             </label>
+
+            {/* Audio Monitor Toggle Hotkey */}
+            <div className="pt-2 border-t border-sky-100 dark:border-sky-900/40 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <Keyboard className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                      Audio Monitor Toggle Hotkey
+                    </span>
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                    Quickly enable or pause the audio monitor from the keyboard.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <kbd className="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
+                    {isRecordingHotkey
+                      ? 'Press keys…'
+                      : settings.audioMonitorHotkey
+                      ? settings.audioMonitorHotkey
+                      : 'Disabled'}
+                  </kbd>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHotkeyError(null);
+                      setIsRecordingHotkey((prev) => !prev);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      isRecordingHotkey
+                        ? 'bg-amber-500 border-amber-500 text-slate-950'
+                        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {isRecordingHotkey ? 'Cancel (Esc)' : 'Set Hotkey'}
+                  </button>
+
+                  {settings.audioMonitorHotkey && !isRecordingHotkey && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHotkeyError(null);
+                        updateSettings({ audioMonitorHotkey: '' });
+                      }}
+                      className="px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0 cursor-pointer"
+                    >
+                      Disable
+                    </button>
+                  )}
+
+                  {settings.audioMonitorHotkey !== DEFAULT_AUDIO_MONITOR_HOTKEY &&
+                    !isRecordingHotkey && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHotkeyError(null);
+                          updateSettings({ audioMonitorHotkey: DEFAULT_AUDIO_MONITOR_HOTKEY });
+                        }}
+                        className="px-2 py-1 rounded-lg text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                </div>
+              </div>
+
+              {isRecordingHotkey && (
+                <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+                  Press your desired key combination (e.g. Alt+Shift+M or Ctrl+Shift+M), or press Esc to cancel.
+                </p>
+              )}
+
+              {hotkeyError && (
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">
+                  {hotkeyError}
+                </p>
+              )}
+            </div>
 
             {/* Toggle 3: Pause Audio Monitor on OS Focus / Do Not Disturb */}
             <div className="pt-2 border-t border-sky-100 dark:border-sky-900/40 space-y-2">
@@ -1124,32 +1216,6 @@ export const SettingsModal: React.FC<{
             )}
           </div>
 
-          {/* Single-File Desktop Installers Guide */}
-          <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <Package className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <div className="font-bold text-slate-900 dark:text-white text-xs">
-                  Single-File Desktop Installers
-                </div>
-                <p className="text-slate-600 dark:text-slate-400 text-[11px]">
-                  Download or build offline-first Tauri v2 installers (.exe/.msi, .dmg, .AppImage/.deb) and ChromeOS PWA.
-                </p>
-              </div>
-            </div>
-            {onOpenSetup && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenSetup('packaging');
-                }}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors shrink-0 cursor-pointer"
-              >
-                View Guide →
-              </button>
-            )}
-          </div>
 
           {/* Privacy Statement Review */}
           <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 flex items-start gap-3">
@@ -1232,6 +1298,32 @@ export const SettingsModal: React.FC<{
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete User Profile & Wipe All Data</span>
             </button>
+          </div>
+
+          {/* About Mute Jar */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-slate-900 dark:text-white text-xs">
+                About Mute Jar
+              </span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                By <strong className="text-slate-800 dark:text-slate-200">Andrew Mair</strong>
+              </span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+              Privacy-first meeting mute tracker and habit companion powered by on-device audio analysis.
+            </p>
+            <div>
+              <a
+                href="https://github.com/andrewmair/Mute-Jar/blob/main/README.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap"
+              >
+                <span>View README on GitHub</span>
+                <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            </div>
           </div>
 
           {/* Confirmation Warning Modal */}

@@ -96,6 +96,7 @@ export const SetupModal: React.FC<SetupModalProps> = ({
       filename: string;
       os: string;
       sizeBytes: number;
+      sha256?: string;
       updatedAt: string;
       downloadUrl: string;
     }>
@@ -106,7 +107,18 @@ export const SetupModal: React.FC<SetupModalProps> = ({
     linux: [],
     chromeos: [],
   });
+  const [checksumsUrl, setChecksumsUrl] = useState<string | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [isLoadingDownloads, setIsLoadingDownloads] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopyValue = (key: string, value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedKey(key);
+    setTimeout(() => {
+      setCopiedKey((prev) => (prev === key ? null : prev));
+    }, 1800);
+  };
 
   const loadInstallersCatalog = React.useCallback(async () => {
     setIsLoadingDownloads(true);
@@ -122,6 +134,8 @@ export const SetupModal: React.FC<SetupModalProps> = ({
           chromeos: Array.isArray(data.installers.chromeos) ? data.installers.chromeos : [],
         });
       }
+      setChecksumsUrl(typeof data?.checksumsUrl === 'string' ? data.checksumsUrl : null);
+      setSignatureUrl(typeof data?.signatureUrl === 'string' ? data.signatureUrl : null);
     } catch {
       // Static/offline mode without Express sidecar
     } finally {
@@ -996,20 +1010,40 @@ export const SetupModal: React.FC<SetupModalProps> = ({
 
                   {/* Direct Download Links served from /downloads (<project>/installers/<os>/) */}
                   <div className="pt-3 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Available Downloads (<code className="font-mono">installers/{activeOsFolder}/</code>)
                         {totalStagedDownloads > 0 && ` · ${totalStagedDownloads} total ready`}
                       </span>
-                      <button
-                        type="button"
-                        onClick={loadInstallersCatalog}
-                        disabled={isLoadingDownloads}
-                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${isLoadingDownloads ? 'animate-spin' : ''}`} />
-                        <span>{isLoadingDownloads ? 'Checking...' : 'Refresh'}</span>
-                      </button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {checksumsUrl && (
+                          <a
+                            href={getLocalApiUrl(checksumsUrl)}
+                            download="SHA256SUMS.txt"
+                            className="text-[11px] font-mono text-sky-700 dark:text-sky-300 hover:underline whitespace-nowrap"
+                          >
+                            SHA256SUMS.txt
+                          </a>
+                        )}
+                        {signatureUrl && (
+                          <a
+                            href={getLocalApiUrl(signatureUrl)}
+                            download="SHA256SUMS.txt.asc"
+                            className="text-[11px] font-mono text-sky-700 dark:text-sky-300 hover:underline whitespace-nowrap"
+                          >
+                            .asc
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={loadInstallersCatalog}
+                          disabled={isLoadingDownloads}
+                          className="text-[11px] font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isLoadingDownloads ? 'animate-spin' : ''}`} />
+                          <span>{isLoadingDownloads ? 'Checking...' : 'Refresh'}</span>
+                        </button>
+                      </div>
                     </div>
 
                     {activeOsDownloads.length > 0 ? (
@@ -1023,14 +1057,34 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                               <div className="font-mono text-[11px] font-semibold text-slate-900 dark:text-white truncate">
                                 {item.filename}
                               </div>
-                              <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {formatInstallerSize(item.sizeBytes)} · /downloads/{activeOsFolder}/
+                              <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">
+                                <span>{formatInstallerSize(item.sizeBytes)}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>/downloads/{activeOsFolder}/</span>
+                                {item.sha256 && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyValue(`sha-${item.filename}`, item.sha256!)}
+                                      className="font-mono hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer"
+                                      title={`Copy SHA-256: ${item.sha256}`}
+                                    >
+                                      <span>sha256:{item.sha256.slice(0, 12)}…</span>
+                                      {copiedKey === `sha-${item.filename}` ? (
+                                        <Check className="w-2.5 h-2.5 text-emerald-500" />
+                                      ) : (
+                                        <Copy className="w-2.5 h-2.5" />
+                                      )}
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
                             <a
                               href={getLocalApiUrl(item.downloadUrl)}
                               download={item.filename}
-                              className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0"
+                              className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap"
                             >
                               <Download className="w-3.5 h-3.5" />
                               <span>Download</span>
@@ -1047,13 +1101,84 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                           <button
                             type="button"
                             onClick={install}
-                            className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+                            className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 transition-colors inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
                           >
                             <span>Install PWA</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Free Code Signing & OS Trust Verification Guidance */}
+                  <div className="pt-3 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Free Signing &amp; Security Alert Guidance</span>
+                    </div>
+
+                    {selectedOsTab === 'windows' && (
+                      <div className="space-y-2 text-[11px]">
+                        <p>
+                          <strong>SignPath Foundation (Free for OSS):</strong> Once <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">SIGNPATH_API_TOKEN</code> and <code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">SIGNPATH_ORG_ID</code> secrets are added, CI signs <code className="font-mono">.exe</code> / <code className="font-mono">.msi</code> installers with a trusted HSM cert to prevent Windows SmartScreen prompts. Before SignPath approval, click <strong>More info → Run anyway</strong> after verifying the SHA-256 hash:
+                        </p>
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px]">
+                          <code className="truncate">Get-FileHash .\Mute*.exe -Algorithm SHA256</code>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyValue('win-hash', 'Get-FileHash .\\Mute*.exe -Algorithm SHA256')}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 inline-flex items-center gap-1 shrink-0 whitespace-nowrap cursor-pointer"
+                          >
+                            {copiedKey === 'win-hash' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === 'win-hash' ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedOsTab === 'mac' && (
+                      <div className="space-y-2 text-[11px]">
+                        <p>
+                          <strong>Ad-Hoc Signed (<code className="font-mono">&quot;-&quot;</code>):</strong> macOS Gatekeeper Notarization requires a paid $99/yr Apple Developer account, so free builds use ad-hoc signing for Apple Silicon entitlements. If macOS flags the downloaded app, approve it in <strong>System Settings → Privacy &amp; Security → Open Anyway</strong> or run once:
+                        </p>
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px]">
+                          <code className="truncate">xattr -rd com.apple.quarantine &quot;/Applications/Mute Jar.app&quot;</code>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyValue('mac-xattr', 'xattr -rd com.apple.quarantine "/Applications/Mute Jar.app"')}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 inline-flex items-center gap-1 shrink-0 whitespace-nowrap cursor-pointer"
+                          >
+                            {copiedKey === 'mac-xattr' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === 'mac-xattr' ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedOsTab === 'linux' && (
+                      <div className="space-y-2 text-[11px]">
+                        <p>
+                          Verify your downloaded <code className="font-mono">.AppImage</code> or <code className="font-mono">.deb</code> against <code className="font-mono">SHA256SUMS.txt</code> (and optional GPG <code className="font-mono">.asc</code> signature) before running:
+                        </p>
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 text-slate-200 font-mono text-[10px]">
+                          <code className="truncate">sha256sum -c SHA256SUMS.txt --ignore-missing</code>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyValue('linux-sha', 'sha256sum -c SHA256SUMS.txt --ignore-missing')}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 inline-flex items-center gap-1 shrink-0 whitespace-nowrap cursor-pointer"
+                          >
+                            {copiedKey === 'linux-sha' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === 'linux-sha' ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedOsTab === 'chromeos' && (
+                      <p className="text-[11px]">
+                        Browser-installed PWAs inherit HTTPS TLS origin trust directly from Chrome and install with zero OS security prompts.
+                      </p>
                     )}
                   </div>
                 </div>

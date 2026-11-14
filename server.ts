@@ -3,7 +3,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
-import { listInstallersCatalog, resolveInstallerFilePath } from './server/downloadsHelper';
+import {
+  listInstallersCatalog,
+  resolveInstallerFilePath,
+  resolveVerificationManifestPath,
+} from './server/downloadsHelper';
 
 dotenv.config();
 
@@ -515,7 +519,23 @@ const INSTALLERS_ROOT = path.resolve(__dirname, 'installers');
 app.get('/downloads', (_req, res) => {
   const installers = listInstallersCatalog(INSTALLERS_ROOT);
   const totalCount = Object.values(installers).reduce((sum, list) => sum + list.length, 0);
-  res.json({ installers, totalCount });
+  const hasChecksums = Boolean(resolveVerificationManifestPath(INSTALLERS_ROOT, 'SHA256SUMS.txt'));
+  const hasSignature = Boolean(resolveVerificationManifestPath(INSTALLERS_ROOT, 'SHA256SUMS.txt.asc'));
+  res.json({
+    installers,
+    totalCount,
+    checksumsUrl: hasChecksums ? '/downloads/SHA256SUMS.txt' : null,
+    signatureUrl: hasSignature ? '/downloads/SHA256SUMS.txt.asc' : null,
+  });
+});
+
+app.get(['/downloads/SHA256SUMS.txt', '/downloads/SHA256SUMS.txt.asc'], (req, res) => {
+  const manifestName = path.basename(req.path);
+  const manifestPath = resolveVerificationManifestPath(INSTALLERS_ROOT, manifestName);
+  if (!manifestPath) {
+    return res.status(404).json({ error: 'Verification manifest not found' });
+  }
+  return res.download(manifestPath, path.basename(manifestPath));
 });
 
 app.get('/downloads/:os/:filename', (req, res) => {

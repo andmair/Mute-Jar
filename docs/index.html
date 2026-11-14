@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mute Jar — Privacy-First Meeting Mute Tracker</title>
+    <meta
+      name="description"
+      content="Privacy-first meeting mute tracker and habit companion powered by 100% on-device audio analysis."
+    />
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --muted: #475569;
+        --accent: #f59e0b;
+        --accent-ink: #0f172a;
+        --link: #4f46e5;
+        --emerald: #059669;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #020617;
+          --surface: #0f172a;
+          --border: #1e293b;
+          --text: #f8fafc;
+          --muted: #94a3b8;
+          --accent: #f59e0b;
+          --accent-ink: #020617;
+          --link: #818cf8;
+          --emerald: #34d399;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .nav {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 18px;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .links {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .links a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .links a:hover,
+      .links a[aria-current="page"] {
+        color: var(--text);
+      }
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      .hero {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 36px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+      p { color: var(--muted); margin: 0 0 16px; }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 18px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+      }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .card p {
+        margin: 0;
+        font-size: 14px;
+      }
+      footer {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      footer a { color: var(--link); text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav class="nav" aria-label="Primary navigation">
+        <a class="brand" href="./index.html">
+          <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="6" y="6" width="52" height="52" rx="14" fill="#0f172a" />
+            <rect x="21" y="18" width="8" height="28" rx="4" fill="#f59e0b" />
+            <rect x="35" y="18" width="8" height="28" rx="4" fill="#f59e0b" />
+            <line x1="14" y1="50" x2="50" y2="14" stroke="#ef4444" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          <span>Mute Jar</span>
+        </a>
+        <div class="links">
+          <a href="./index.html" aria-current="page">Overview</a>
+          <a href="./download.html">Download</a>
+          <a href="./privacy.html">Privacy</a>
+          <a href="https://github.com/andrewmair/Mute-Jar" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Stop saying &ldquo;Sorry, I was on mute!&rdquo;</h1>
+        <p>
+          Mute Jar is a privacy-first meeting mute tracker and habit companion powered by 100% on-device audio analysis. Every muted slip-up drops a MuteCoin into your jar—redeemable for charity donations, personal habits, or team forfeits.
+        </p>
+        <div class="cta-row">
+          <a class="btn-primary" href="./download.html">Download Desktop Installers</a>
+          <a class="btn-secondary" href="./privacy.html">Read Privacy Policy</a>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Core highlights">
+        <article class="card">
+          <h2>100% On-Device Audio</h2>
+          <p>Analyzes microphone amplitude and voiceprint pitch strictly in volatile RAM—zero recordings and zero transcripts.</p>
+        </article>
+        <article class="card">
+          <h2>OS Status Bar &amp; Hotkey</h2>
+          <p>Quick-toggle monitoring with one click from your macOS menu bar or Windows system tray, or press your custom hotkey.</p>
+        </article>
+        <article class="card">
+          <h2>Single-File Bundles</h2>
+          <p>Lightweight ~8–15 MB Tauri v2 installers for macOS, Windows, and Linux, plus a 1-click ChromeOS PWA.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <span>Mute Jar · By Andrew Mair · Apache-2.0 License</span>
+      <span>
+        <a href="./download.html">Downloads</a> ·
+        <a href="./privacy.html">Privacy</a> ·
+        <a href="https://github.com/andrewmair/Mute-Jar/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a>
+      </span>
+    </footer>
+  </body>
+</html>

@@ -50,7 +50,7 @@ const MainAppContent: React.FC = () => {
   const [setupInitialTab, setSetupInitialTab] = useState<'desktop' | 'chat' | 'mcp' | 'packaging'>('desktop');
   const [activeDashboardTab, setActiveDashboardTab] = useState<'ledger' | 'pledges'>('ledger');
 
-  const philosophyInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
+  const philosophyInfo = getPhilosophyCombinedLabel(settings.persona);
 
   // Toggle dark/light theme
   const toggleTheme = () => {

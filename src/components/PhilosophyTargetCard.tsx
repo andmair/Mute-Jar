@@ -30,7 +30,7 @@ export const PhilosophyTargetCard: React.FC<PhilosophyTargetCardProps> = ({
 }) => {
   const { settings, currentMonthCoins, formatCurrency } = useMuteJar();
 
-  const labelInfo = getPhilosophyCombinedLabel(settings.persona, settings.philosophyLabelStyle);
+  const labelInfo = getPhilosophyCombinedLabel(settings.persona);
 
   // SAINT (Charity Donation)
   if (settings.persona === 'saint') {
