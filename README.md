@@ -145,11 +145,6 @@ Each operating system receives a dedicated **single-file download** (~8–15 MB)
 2. Right-click the Mute Jar icon on your Shelf and choose **Pin**.
 3. To auto-start on boot, open **ChromeOS Settings → Apps → Manage your apps → Mute Jar → Open on startup**.
 
-### 🔐 Free Code Signing & Integrity Verification
-- **Windows (SignPath Foundation — Free for Open Source)**: Apply at [`signpath.org/apply`](https://signpath.org/apply) and configure `SIGNPATH_API_TOKEN` and `SIGNPATH_ORG_ID` repository secrets (plus optional `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG`, `SIGNPATH_ARTIFACT_CONFIG_SLUG` repository variables) to automatically sign `.exe` and `.msi` packages via [SignPath Foundation](https://signpath.org/) and eliminate Windows SmartScreen warnings. Before onboarding, click **More info → Run anyway** after verifying `Get-FileHash .\Mute*.exe -Algorithm SHA256`.
-- **macOS (Free Ad-Hoc Signing)**: Tauri v2 signs macOS builds with `"signingIdentity": "-"` (`src-tauri/tauri.conf.json`) for Apple Silicon entitlements without a paid $99/yr Developer ID. If Gatekeeper flags the downloaded app, allow it under **System Settings → Privacy & Security → Open Anyway** or run `xattr -rd com.apple.quarantine "/Applications/Mute Jar.app"`.
-- **Linux & Cross-OS Checksums**: Every CI build generates `installers/SHA256SUMS.txt` (verify with `sha256sum -c SHA256SUMS.txt --ignore-missing`), and optionally creates a detached GPG signature (`SHA256SUMS.txt.asc`) if `GPG_PRIVATE_KEY` (and optional `GPG_PASSPHRASE`) secrets exist. Staged checksums are also exposed in-app via **Desktop Installers** (`/downloads`).
-
 ---
 
 ## 🔌 Optional Local MCP & Webhook Sidecar
