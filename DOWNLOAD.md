@@ -10,21 +10,21 @@
 
 Every commit pushed to GitHub automatically compiles standalone installers and stages them into the [`installers/`](./installers/) directory, and version tags (`v*`) attach them directly to [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases).
 
-| Operating System | Single-File Package | Repo Folder | Notes |
-| :--- | :--- | :--- | :--- |
-| **macOS** (Apple Silicon & Intel) | `Mute Jar_1.0.0_universal.dmg` | [`installers/macos/`](./installers/macos/) | Universal binary (M1–M4 + Intel), ad-hoc signed |
-| **Windows 10 / 11** (64-bit) | `Mute Jar_1.0.0_x64-setup.exe` / `.msi` | [`installers/windows/`](./installers/windows/) | Built-in WebView2; NSIS wizard & enterprise `.msi` |
-| **Linux** (x86_64) | `Mute Jar_1.0.0_amd64.AppImage` / `.deb` | [`installers/linux/`](./installers/linux/) | Portable AppImage & Debian/Ubuntu `.deb` |
-| **ChromeOS** (Chromebook) | 1-Click PWA | [`installers/chromeos/`](./installers/chromeos/) | Install directly from Chrome address bar |
-| **Checksums & Signatures** | `SHA256SUMS.txt` (+ optional `.asc`) | [`installers/SHA256SUMS.txt`](./installers/SHA256SUMS.txt) | SHA-256 verification manifest for all binaries |
+| Operating System | Recommended Download | Direct / Standalone Files | Repo Folder | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **macOS** (Apple Silicon & Intel) | [`MuteJar_1.0.0_macos.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/MuteJar_1.0.0_macos.zip) *(recommended: `.dmg` + `README.md`)* | [`Mute Jar_1.0.0_universal.dmg`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/Mute%20Jar_1.0.0_universal.dmg) | [`installers/macos/`](./installers/macos/) | Universal binary (M1–M4 + Intel), ad-hoc signed |
+| **Windows 10 / 11** (64-bit) | [`MuteJar_1.0.0_windows.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/windows/MuteJar_1.0.0_windows.zip) | `Mute Jar_1.0.0_x64-setup.exe` / `.msi` | [`installers/windows/`](./installers/windows/) | Built-in WebView2; NSIS wizard & enterprise `.msi` |
+| **Linux** (x86_64) | [`MuteJar_1.0.0_linux.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/linux/MuteJar_1.0.0_linux.zip) | `Mute Jar_1.0.0_amd64.AppImage` / `.deb` | [`installers/linux/`](./installers/linux/) | Portable AppImage & Debian/Ubuntu `.deb` |
+| **ChromeOS** (Chromebook) | 1-Click PWA | — | [`installers/chromeos/`](./installers/chromeos/) | Install directly from Chrome address bar |
+| **Checksums & Signatures** | `SHA256SUMS.txt` (+ optional `.asc`) | — | [`installers/SHA256SUMS.txt`](./installers/SHA256SUMS.txt) | SHA-256 verification manifest for all installers and ZIPs |
 
 ---
 
 ## Installation Instructions
 
 ### macOS (Ventura, Sonoma, Sequoia)
-1. Download the Universal `.dmg` from [`installers/macos/`](./installers/macos/) or [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases).
-2. Open the `.dmg` and drag **Mute Jar** into your **Applications** folder.
+1. **Recommended:** Download [`MuteJar_1.0.0_macos.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/MuteJar_1.0.0_macos.zip) (bundles the Universal `.dmg` together with `README.md` setup instructions), or download the direct Universal `.dmg` ([`Mute Jar_1.0.0_universal.dmg`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/Mute%20Jar_1.0.0_universal.dmg)) from [`installers/macos/`](./installers/macos/) or [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases).
+2. Double-click the `.zip` (if downloaded) to extract it, open `Mute Jar_1.0.0_universal.dmg`, and drag **Mute Jar** into your **Applications** folder.
 3. Free builds use Apple ad-hoc signing (`signingIdentity: "-"`). If macOS displays an *unidentified developer* alert on first launch:
    - Right-click **Mute Jar.app** → click **Open** (or approve under **System Settings → Privacy & Security → Open Anyway**), **or**
    - Clear the quarantine attribute once in Terminal:
@@ -34,13 +34,14 @@ Every commit pushed to GitHub automatically compiles standalone installers and s
 4. Grant microphone access when prompted under **System Settings → Privacy & Security → Microphone**.
 
 ### Windows 10 / 11
-1. Download `Mute Jar_1.0.0_x64-setup.exe` (personal wizard) or `Mute Jar_1.0.0_x64_en-US.msi` from [`installers/windows/`](./installers/windows/) or [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases).
+1. Download [`MuteJar_1.0.0_windows.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/windows/MuteJar_1.0.0_windows.zip) (contains `.exe`, `.msi`, and `README.md`), or grab `Mute Jar_1.0.0_x64-setup.exe` / `Mute Jar_1.0.0_x64_en-US.msi` directly from [`installers/windows/`](./installers/windows/) or [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases).
 2. Double-click the installer to run (Windows 10/11 includes Microsoft Edge WebView2 automatically).
 3. If Windows SmartScreen appears prior to SignPath Foundation certificate onboarding, verify the SHA-256 hash below and click **More info → Run anyway**.
 
 > *Free Windows code signing provided by SignPath.io, certificate by [SignPath Foundation](https://signpath.org/) (when configured in GitHub Actions).*
 
 ### Linux (Ubuntu, Debian, Fedora, Arch)
+Download [`MuteJar_1.0.0_linux.zip`](https://github.com/andrewmair/Mute-Jar/raw/main/installers/linux/MuteJar_1.0.0_linux.zip) (contains `.AppImage`, `.deb`, and `README.md`) or grab the standalone package from [`installers/linux/`](./installers/linux/):
 - **AppImage (Portable):**
   ```bash
   chmod +x "Mute Jar"*.AppImage

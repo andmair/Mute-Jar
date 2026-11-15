@@ -137,6 +137,20 @@
         text-decoration: none;
         white-space: nowrap;
       }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .sub-link {
+        font-size: 12px;
+        color: var(--link);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .sub-link:hover {
+        text-decoration: underline;
+      }
       .panel {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -209,49 +223,79 @@
         <article class="card">
           <div>
             <h2>macOS</h2>
-            <p>Universal binary for Apple Silicon (M1–M4) and Intel Macs.</p>
-            <div class="meta">Mute Jar_1.0.0_universal.dmg</div>
+            <p>Recommended ZIP bundle (Universal .dmg + README) for Apple Silicon &amp; Intel Macs.</p>
+            <div class="meta">MuteJar_1.0.0_macos.zip</div>
           </div>
-          <a
-            class="btn"
-            href="https://github.com/andrewmair/Mute-Jar/tree/main/installers/macos"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Get macOS Installer
-          </a>
+          <div class="actions">
+            <a
+              class="btn"
+              href="https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/MuteJar_1.0.0_macos.zip"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download macOS ZIP (Recommended)
+            </a>
+            <a
+              class="sub-link"
+              href="https://github.com/andrewmair/Mute-Jar/raw/main/installers/macos/Mute%20Jar_1.0.0_universal.dmg"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Direct .dmg download (Mute Jar_1.0.0_universal.dmg)
+            </a>
+          </div>
         </article>
 
         <article class="card">
           <div>
             <h2>Windows 10 / 11</h2>
-            <p>NSIS setup wizard (.exe) and enterprise Windows Installer (.msi).</p>
-            <div class="meta">x64-setup.exe · x64_en-US.msi</div>
+            <p>NSIS setup wizard (.exe), enterprise .msi, and bundled ZIP package.</p>
+            <div class="meta">MuteJar_1.0.0_windows.zip · .exe · .msi</div>
           </div>
-          <a
-            class="btn"
-            href="https://github.com/andrewmair/Mute-Jar/tree/main/installers/windows"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Get Windows Installer
-          </a>
+          <div class="actions">
+            <a
+              class="btn"
+              href="https://github.com/andrewmair/Mute-Jar/raw/main/installers/windows/MuteJar_1.0.0_windows.zip"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download Windows ZIP
+            </a>
+            <a
+              class="sub-link"
+              href="https://github.com/andrewmair/Mute-Jar/tree/main/installers/windows"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Browse standalone .exe / .msi
+            </a>
+          </div>
         </article>
 
         <article class="card">
           <div>
             <h2>Linux</h2>
-            <p>Portable zero-install AppImage and Debian/Ubuntu .deb package.</p>
-            <div class="meta">amd64.AppImage · amd64.deb</div>
+            <p>Portable AppImage, Debian/Ubuntu .deb, and bundled ZIP package.</p>
+            <div class="meta">MuteJar_1.0.0_linux.zip · .AppImage · .deb</div>
           </div>
-          <a
-            class="btn"
-            href="https://github.com/andrewmair/Mute-Jar/tree/main/installers/linux"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Get Linux Installer
-          </a>
+          <div class="actions">
+            <a
+              class="btn"
+              href="https://github.com/andrewmair/Mute-Jar/raw/main/installers/linux/MuteJar_1.0.0_linux.zip"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download Linux ZIP
+            </a>
+            <a
+              class="sub-link"
+              href="https://github.com/andrewmair/Mute-Jar/tree/main/installers/linux"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Browse standalone .AppImage / .deb
+            </a>
+          </div>
         </article>
 
         <article class="card">

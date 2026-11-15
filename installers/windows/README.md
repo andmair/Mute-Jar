@@ -1,7 +1,8 @@
 # Windows Single-File Installers
 
-After the GitHub Actions workflow runs (triggered automatically on every commit), the Windows installers are staged here (or downloadable via **GitHub → Actions** `installers-windows` / `mutejar-installers-all-os`):
+After the GitHub Actions workflow runs (triggered automatically on every commit), the Windows installers are staged here (and available via **GitHub → Actions** `mutejar-installers-all-os` or **GitHub Releases**):
 
+- `MuteJar_1.0.0_windows.zip` (combined ZIP containing both installers + this `README.md`)
 - `Mute Jar_1.0.0_x64-setup.exe` (NSIS wizard)
 - `Mute Jar_1.0.0_x64_en-US.msi` (Windows Installer package)
 

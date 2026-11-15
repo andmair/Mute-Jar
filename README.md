@@ -107,22 +107,22 @@ Mute Jar uses an **offline-first React SPA** embedded inside a lightweight **Tau
 
 Each operating system receives a dedicated **single-file download** (~8–15 MB) generated automatically via **Tauri v2** and `.github/workflows/release-desktop.yml` (on GitHub Releases), or installed in 1 click as a PWA on ChromeOS. End users do **not** need Node.js, Rust, or Docker installed.
 
-| Operating System | Single-File Download | Approx. Size | Install Experience |
-| :--- | :--- | :--- | :--- |
-| **Windows 10 / 11** | `MuteJar_x64-setup.exe` (NSIS) or `.msi` | ~10 MB | Standard wizard; uses built-in Windows WebView2 |
-| **macOS (Apple Silicon & Intel)** | `MuteJar_universal.dmg` | ~12 MB | Open `.dmg` & drag to Applications; built-in WKWebView |
-| **Linux (Ubuntu, Fedora, Arch)** | `MuteJar_amd64.AppImage` or `.deb` | ~14 MB | Run AppImage directly (`chmod +x`) or `apt install` `.deb` |
-| **ChromeOS (Chromebook)** | 1-Click PWA (Omnibox Install) | < 2 MB cache | Installs from browser bar to Shelf with offline cache |
+| Operating System | Recommended / Bundled ZIP | Standalone Installer(s) | Approx. Size | Install Experience |
+| :--- | :--- | :--- | :--- | :--- |
+| **macOS (Apple Silicon & Intel)** | **`MuteJar_1.0.0_macos.zip`** *(recommended: `.dmg` + `README.md`)* | `Mute Jar_1.0.0_universal.dmg` | ~12 MB | Unzip, open `.dmg` & drag to Applications; built-in WKWebView |
+| **Windows 10 / 11** | `MuteJar_1.0.0_windows.zip` | `Mute Jar_1.0.0_x64-setup.exe` / `.msi` | ~10 MB | Standard wizard; uses built-in Windows WebView2 |
+| **Linux (Ubuntu, Fedora, Arch)** | `MuteJar_1.0.0_linux.zip` | `Mute Jar_1.0.0_amd64.AppImage` / `.deb` | ~14 MB | Run AppImage directly (`chmod +x`) or `apt install` `.deb` |
+| **ChromeOS (Chromebook)** | 1-Click PWA (Omnibox Install) | — | < 2 MB cache | Installs from browser bar to Shelf with offline cache |
 
 ### 🪟 Windows (Windows 10 / 11)
-1. Download **`MuteJar_x64-setup.exe`** (for personal installs) or **`MuteJar_x64.msi`** (for enterprise rollout) from the Releases page.
+1. Download **`MuteJar_1.0.0_windows.zip`** (contains `.exe`, `.msi`, and `README.md`) or grab **`Mute Jar_1.0.0_x64-setup.exe`** / **`Mute Jar_1.0.0_x64_en-US.msi`** directly from [`installers/windows/`](./installers/windows/) or the Releases page.
 2. Double-click the file to run the installer—Windows 10/11 includes Microsoft Edge WebView2 by default, so no extra runtimes are downloaded.
 3. Launch **Mute Jar** from the Start Menu and pin it to your Taskbar.
 4. *(Optional Autostart)*: Press `Win + R`, type `shell:startup`, and drop the Mute Jar Start Menu shortcut into the folder.
 
 ### 🍎 macOS (Ventura, Sonoma, Sequoia)
-1. Download the Universal **`MuteJar_universal.dmg`** (runs natively on both Apple Silicon M1–M4 and Intel Macs).
-2. Double-click the `.dmg` and drag **Mute Jar** into your **Applications** folder.
+1. **Recommended:** Download **`MuteJar_1.0.0_macos.zip`** (bundles the Universal `.dmg` and `README.md` setup instructions), or download the direct Universal **`Mute Jar_1.0.0_universal.dmg`** from [`installers/macos/`](./installers/macos/) or [GitHub Releases](https://github.com/andrewmair/Mute-Jar/releases) (runs natively on both Apple Silicon M1–M4 and Intel Macs).
+2. Double-click the `.zip` (if downloaded), open the `.dmg`, and drag **Mute Jar** into your **Applications** folder.
 3. Launch Mute Jar and allow microphone access when prompted (pre-declared via `src-tauri/Info.plist` and hardened sandbox `Entitlements.plist`).
 4. *(Optional Autostart)*: Open **System Settings → General → Login Items** and add **Mute Jar**.
 
@@ -203,10 +203,10 @@ npm run desktop:icons
 npm run desktop:dev
 
 # 3. Build single-file installers into src-tauri/target/release/bundle/ and organize into installers/<os>/
-npm run desktop:build && node scripts/stage-installers.mjs
+npm run desktop:build && node scripts/stage-installers.mjs && node scripts/package-installer-zips.mjs && node scripts/generate-checksums.mjs
 ```
 
-Every commit pushed to GitHub automatically triggers `.github/workflows/release-desktop.yml`, which compiles Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) installers and uploads them organized into `installers/macos/`, `installers/windows/`, `installers/linux/`, and `installers/chromeos/` as downloadable workflow artifacts (`mutejar-installers-all-os`). Pushing a `v*` tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`) also attaches those installers to a draft **GitHub Release**.
+Every commit pushed to GitHub automatically triggers `.github/workflows/release-desktop.yml`, which compiles Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) installers, packages each OS folder into a versioned `.zip` (`MuteJar_<version>_<os>.zip` containing the built installer(s) and `README.md`), generates `SHA256SUMS.txt` across all installers and ZIPs, commits them into `installers/`, and uploads them as downloadable workflow artifacts (`mutejar-installers-all-os`). Pushing a `v*` tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`) also attaches all installers and ZIPs to a draft **GitHub Release**.
 
 ---
 

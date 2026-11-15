@@ -36,12 +36,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install Rust stable
@@ -101,7 +101,7 @@ jobs:
       - name: Upload unsigned Windows installers for SignPath
         id: upload-unsigned-windows
         if: matrix.os_folder == 'windows' && steps.check-signing.outputs.has_signpath == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unsigned-windows-installers
           path: |
@@ -122,7 +122,7 @@ jobs:
           output-artifact-directory: installers/windows
 
       - name: Upload ${{ matrix.os_label }} installers artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installers-${{ matrix.os_folder }}
           path: installers/${{ matrix.os_folder }}/
@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ startsWith(github.ref, 'refs/heads/') && github.ref_name || '' }}
           fetch-depth: 0
@@ -146,22 +146,51 @@ jobs:
           rm -f installers/SHA256SUMS.txt installers/SHA256SUMS.txt.asc
 
       - name: Copy macOS installers into installers/macos/
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: installers-macos
           path: installers/macos
 
       - name: Copy Windows installers into installers/windows/
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: installers-windows
           path: installers/windows
 
       - name: Copy Linux installers into installers/linux/
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: installers-linux
           path: installers/linux
+
+      - name: Create versioned OS installer ZIP archives
+        run: node scripts/package-installer-zips.mjs
+
+      - name: Verify ZIP archive integrity and contents
+        run: |
+          VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8')).version)")
+          for os in macos windows linux; do
+            zip_file="installers/${os}/MuteJar_${VERSION}_${os}.zip"
+            test -f "$zip_file"
+            echo "=== Testing $zip_file ==="
+            unzip -t "$zip_file"
+            unzip -l "$zip_file"
+            entries=$(unzip -Z1 "$zip_file")
+            echo "$entries" | grep -qx "README.md"
+            if echo "$entries" | grep -q '/'; then
+              echo "ERROR: Expected flat root entries without subdirectories in $zip_file"
+              exit 1
+            fi
+            if echo "$entries" | grep -qiE '\.zip$|SHA256SUMS|\.asc$'; then
+              echo "ERROR: Unexpected ZIP or checksum file inside $zip_file"
+              exit 1
+            fi
+            test -f "installers/${os}/README.md"
+          done
+          unzip -Z1 "installers/macos/MuteJar_${VERSION}_macos.zip" | grep -qE '^[^/]+\.dmg$'
+          unzip -Z1 "installers/windows/MuteJar_${VERSION}_windows.zip" | grep -qE '^[^/]+\.(exe|msi)$'
+          unzip -Z1 "installers/linux/MuteJar_${VERSION}_linux.zip" | grep -qE '^[^/]+\.(AppImage|deb)$'
+          echo "Verified all platform ZIP archives contain built installers and README.md at root."
 
       - name: Generate SHA256SUMS.txt verification manifest
         run: node scripts/generate-checksums.mjs
@@ -194,6 +223,9 @@ jobs:
         run: |
           ls -la installers/macos installers/windows installers/linux installers/chromeos
           cat installers/SHA256SUMS.txt || true
+          grep -q "macos/.*\.zip$" installers/SHA256SUMS.txt
+          grep -q "windows/.*\.zip$" installers/SHA256SUMS.txt
+          grep -q "linux/.*\.zip$" installers/SHA256SUMS.txt
 
       - name: Commit compiled installers and checksums to OS folders on branch
         if: startsWith(github.ref, 'refs/heads/')
@@ -210,30 +242,33 @@ jobs:
           git push origin "HEAD:${{ github.ref_name }}"
 
       - name: Upload combined multi-OS installers bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mutejar-installers-all-os
           path: installers/
 
       - name: Publish GitHub Release on version tags
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           name: Mute Jar ${{ github.ref_name }}
           body: |
-            Single-file desktop installers for every operating system:
-            - **macOS**: Universal `.dmg` (Apple Silicon & Intel, ad-hoc signed)
-            - **Windows**: `.exe` (NSIS) and `.msi` (SignPath Foundation OSS signing when configured)
-            - **Linux**: `.AppImage` and `.deb`
-            - **Verification**: `SHA256SUMS.txt` included for checksum validation
+            Single-file desktop installers and bundled ZIP packages for every operating system:
+            - **macOS**: Recommended `MuteJar_*_macos.zip` (`.dmg` + `README.md`) or direct Universal `.dmg` (Apple Silicon & Intel, ad-hoc signed)
+            - **Windows**: `MuteJar_*_windows.zip` (`.exe` + `.msi` + `README.md`) or direct `.exe` (NSIS) / `.msi` (SignPath Foundation OSS signing when configured)
+            - **Linux**: `MuteJar_*_linux.zip` (`.AppImage` + `.deb` + `README.md`) or direct `.AppImage` / `.deb`
+            - **Verification**: `SHA256SUMS.txt` included for checksum validation across all installers and ZIPs
 
             No Node.js or Docker required.
           files: |
             installers/macos/*.dmg
+            installers/macos/*.zip
             installers/windows/*.exe
             installers/windows/*.msi
+            installers/windows/*.zip
             installers/linux/*.AppImage
             installers/linux/*.deb
+            installers/linux/*.zip
             installers/SHA256SUMS.txt
             installers/SHA256SUMS.txt.asc
