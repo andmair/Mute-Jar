@@ -1,7 +1,7 @@
 # Mute Jar Privacy Policy
 
 **Last updated:** November 14, 2026  
-**Author:** Andrew Mair ([andmair@gmail.com](mailto:andmair@gmail.com))
+**Author:** Andrew Mair
 
 [← Back to README](./README.md) · [Download Installers](./DOWNLOAD.md)
 
@@ -60,4 +60,4 @@ You have complete control over your local data at all times:
 
 ## 6. Contact
 
-Questions about privacy or security can be directed to **Andrew Mair** at [andmair@gmail.com](mailto:andmair@gmail.com) or via [GitHub Issues](https://github.com/andrewmair/Mute-Jar/issues).
+Questions about privacy or security can be directed to **Andrew Mair** via [GitHub Issues](https://github.com/andrewmair/Mute-Jar/issues).
