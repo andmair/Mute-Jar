@@ -188,21 +188,6 @@ npm run build
 npm run sidecar
 ```
 
-### Building Single-File Desktop Packages Locally
-
-```bash
-# 1. Generate native .icns, .ico, and PNG bundle icons from public/pwa-512x512.png
-npm run desktop:icons
-
-# 2. Launch live Tauri desktop window during development
-npm run desktop:dev
-
-# 3. Build single-file installers into src-tauri/target/release/bundle/ and organize into installers/<os>/
-npm run desktop:build && node scripts/stage-installers.mjs && node scripts/package-installer-zips.mjs && node scripts/generate-checksums.mjs
-```
-
-Every commit pushed to GitHub automatically triggers `.github/workflows/release-desktop.yml`, which compiles Windows (`.exe`/`.msi`), macOS Universal (`.dmg`), and Linux (`.AppImage`/`.deb`) installers, packages each OS folder into a versioned `.zip` (`MuteJar_<version>_<os>.zip` containing the built installer(s) and `README.md`), generates `SHA256SUMS.txt` across all installers and ZIPs, commits them into `installers/`, and uploads them as downloadable workflow artifacts (`mutejar-installers-all-os`). Pushing a `v*` tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`) also attaches all installers and ZIPs to a draft **GitHub Release**.
-
 ---
 
 ## ⚙️ Configuration & Environment Variables
